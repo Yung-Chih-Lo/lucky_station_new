@@ -99,7 +99,7 @@ function LeafletMap({
       <Polyline
         key={`conn-${i}`}
         positions={[[from.lat, from.lng], [to.lat, to.lng]]}
-        pathOptions={{ color, weight: 4, opacity }}
+        pathOptions={{ color, weight: 6, opacity }}
       />
     )
   }).filter(Boolean)
@@ -132,13 +132,13 @@ function LeafletMap({
       <CircleMarker
         key={`station-${station.id}`}
         center={[station.lat, station.lng]}
-        radius={station.lines?.length > 1 ? 7 : 5}
+        radius={station.lines?.length > 1 ? 9 : 6}
         pathOptions={{
           color,
           fillColor: 'white',
           fillOpacity: opacity,
           opacity,
-          weight: 2.5,
+          weight: 3,
         }}
       >
         <Tooltip direction="top" offset={[0, -6]}>{station.name?.zh}</Tooltip>
@@ -156,8 +156,8 @@ function LeafletMap({
       scrollWheelZoom={true}
     >
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
       {polylines}
       {stationMarkers}

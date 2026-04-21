@@ -2,14 +2,14 @@ import React, { useState, useRef } from 'react'
 import {
   Button, Form, Input, Modal, Checkbox, Alert, Typography, Space, Tag, Divider, message,
 } from 'antd'
-import { LogoutOutlined, PlusOutlined, DownloadOutlined, UploadOutlined, UndoOutlined } from '@ant-design/icons'
+import { LogoutOutlined, DownloadOutlined, UploadOutlined, UndoOutlined } from '@ant-design/icons'
 import styled from 'styled-components'
 import LeafletMap from '../components/LeafletMap.jsx'
 import { getActiveMetroData, saveMetroDataToStorage, clearMetroDataStorage } from '../utils/metroDataLoader.js'
 import { allMetroLineCodes, metroLineInfo } from '../constants/metroInfo.js'
 import bundledData from '../data/metroData.json'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 
 const lineColorMap = {
   BR: '#9c6b38', R: '#e3192a', RA: '#f5a0b5',
@@ -41,24 +41,21 @@ function AdminLogin({ onSuccess }) {
   return (
     <LoginWrap>
       <LoginCard>
-        <Title level={3} style={{ textAlign: 'center', marginBottom: 24 }}>🔐 後台管理</Title>
+        <Title level={4} style={{ textAlign: 'center', marginBottom: 24, fontWeight: 500 }}>後台管理</Title>
         {error && (
-          <Alert message="密碼錯誤，請再試一次" type="error" showIcon style={{ marginBottom: 16 }} />
+          <Alert message="密碼錯誤" type="error" style={{ marginBottom: 16 }} />
         )}
         <Form layout="vertical" onFinish={handleSubmit}>
-          <Form.Item label="管理密碼">
+          <Form.Item>
             <Input.Password
               value={input}
               onChange={e => { setInput(e.target.value); setError(false) }}
-              placeholder="請輸入密碼"
+              placeholder="密碼"
               size="large"
             />
           </Form.Item>
           <Button type="primary" htmlType="submit" block size="large">登入</Button>
         </Form>
-        <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginTop: 12, fontSize: 12 }}>
-          密碼來自 Zeabur 環境變數 VITE_PASSWORD
-        </Text>
       </LoginCard>
     </LoginWrap>
   )
