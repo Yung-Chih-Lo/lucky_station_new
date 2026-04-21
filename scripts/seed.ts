@@ -49,14 +49,7 @@ type RawData = {
 function resolveJsonPath(): string {
   const arg = process.argv[2]
   if (arg) return path.resolve(arg)
-  const candidates = [
-    path.resolve(process.cwd(), 'scripts/seed-data/metroData.json'),
-    path.resolve(process.cwd(), 'src/data/metroData.json'),
-  ]
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c
-  }
-  return candidates[0]
+  return path.resolve(process.cwd(), 'scripts/seed-data/metroData.json')
 }
 
 function main(): void {

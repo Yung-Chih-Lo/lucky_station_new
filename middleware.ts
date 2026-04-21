@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { unsealData } from 'iron-session'
-import { SESSION_COOKIE_NAME, type SessionData } from '../lib/session-shared'
+import { SESSION_COOKIE_NAME, type SessionData } from '@/lib/session-shared'
 
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],

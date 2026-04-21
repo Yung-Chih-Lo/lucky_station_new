@@ -33,23 +33,38 @@
 
 ## 安裝與設定 (Installation & Setup)
 
-若要在您的本地環境運行此專案，請依照以下步驟：
+專案為 Next.js 15 App Router + SQLite (Drizzle ORM)。本地跑需要 Node.js 20。
 
-1.  **複製儲存庫 (Clone the repository):**
+1.  **複製儲存庫**
     ```bash
-    git clone https://github.com/Yung-Chih-Lo/lucky_station.git
-    cd lucky_station
-    ```
-2.  **安裝依賴套件 (Install dependencies):**
-    請確保您已安裝 [Node.js](https://nodejs.org/) 和 npm 。
-    ```bash
+    git clone https://github.com/Yung-Chih-Lo/lucky_taipei_mrt.git
+    cd lucky_taipei_mrt
     npm install
     ```
-3.  **啟動開發伺服器 (Start the development server):**
+
+2.  **設定環境變數**：建 `.env.local`
+    ```
+    ADMIN_USERNAME=admin
+    ADMIN_PASSWORD_HASH=<run: npm run hash-password -- 'your_pw'>
+    SESSION_SECRET=<run: openssl rand -base64 48>
+    DATABASE_PATH=./data/metro.db
+    ```
+
+3.  **初始化資料庫（第一次才需要）**
+    ```bash
+    npm run migrate   # 建表
+    npm run seed      # 從 scripts/seed-data/metroData.json 灌入
+    ```
+
+4.  **啟動開發伺服器**
     ```bash
     npm run dev
     ```
-4.  啟動成功後，在瀏覽器中打開終端機顯示的網址，通常是 `http://localhost:5173`。
+    打開 `http://localhost:3000`（公開頁）或 `http://localhost:3000/admin`（後台）。
+
+### 部署 (Docker)
+
+正式部署用 repo 根的 `Dockerfile`。entrypoint 會自動 `migrate` + 幂等 `seed` 後啟動 Next.js，所以掛 volume 到 `/data` 就能讓資料跨重 build 保留。
 
 ## 使用方式 (Usage)
 

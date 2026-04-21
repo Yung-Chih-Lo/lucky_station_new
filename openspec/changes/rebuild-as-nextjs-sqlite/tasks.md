@@ -70,9 +70,9 @@
 
 ## 7. Remove the old Vite stack (only after Phase 6 is green)
 
-- [ ] 7.1 Move `src/middleware.ts` to repo-root `middleware.ts`, fix its import of `session-shared` back to `@/lib/session-shared`, then delete `src/`, `index.html`, `vite.config.js`, `eslint.config.js` (recreate ESLint config for Next.js if desired), `public/_redirects`
-- [ ] 7.2 Remove `vite`, `@vitejs/plugin-react-swc`, `react-router-dom`, `leaflet`, `react-leaflet`, `@types/leaflet` from `package.json`
-- [ ] 7.3 Remove old Vite scripts (`dev`, `build`, `preview`) and the old `homepage` field if no longer applicable; make `dev`/`build` the Next.js variants
-- [ ] 7.4 Move `scripts/seed.ts`' JSON source path: either keep the JSON in `scripts/seed-data/metroData.json` for future re-seeds, or document that re-seeding requires restoring the file from git history
-- [ ] 7.5 Update `README.md` with the new dev flow (`npm run migrate`, `npm run seed`, `npm run dev`)
-- [ ] 7.6 Commit final deletion as a separate commit so rollback to the old stack remains a single revert
+- [x] 7.1 Moved `src/middleware.ts` → repo-root `middleware.ts` with `@/lib/session-shared` import. Deleted `src/`, `index.html`, `vite.config.js`, `eslint.config.js`, `public/_redirects`, `public/vite.svg`.
+- [x] 7.2 Removed `vite`, `@vitejs/plugin-react-swc`, `react-router-dom`, `leaflet`, `react-leaflet`, `@types/leaflet`, `prop-types`, `styled-components`, `@eslint/js`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals`. `npm install` pruned 33 packages.
+- [x] 7.3 Removed `dev:vite`, `build:vite`, `preview` scripts and the `homepage` field. `dev`/`build`/`start`/`lint` are Next.js only.
+- [x] 7.4 `scripts/seed-data/metroData.json` is the permanent seed source; removed the legacy `src/data/metroData.json` fallback from `seed.ts`.
+- [x] 7.5 README's "安裝與設定" section rewritten for Next.js 15 + SQLite flow (env vars, migrate, seed, `npm run dev` on port 3000) plus a brief Docker deploy note.
+- [x] 7.6 Cleanup landing as a single separate commit so rollback to the previous dockerized-but-src-present state is one `git revert` if needed.
