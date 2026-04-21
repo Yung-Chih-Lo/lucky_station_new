@@ -52,9 +52,26 @@ type DragState =
   | { kind: 'label'; id: number; startSvgX: number; startSvgY: number; startClientX: number; startClientY: number; startedAt: number; moved: boolean }
   | { kind: 'background'; startClientX: number; startClientY: number; startedAt: number; moved: boolean; startSvgX: number; startSvgY: number }
 
-function pathPointsToD(points: ConnectionPathPoint[]): string {
+function pathPointsToD(
+  points: ConnectionPathPoint[],
+  fromPos: { x: number; y: number },
+  toPos: { x: number; y: number },
+): string {
+  if (points.length === 0) {
+    return `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`
+  }
+  const lastIdx = points.length - 1
   return points
-    .map((p) => `${p.command} ${p.coordinates.join(' ')}`)
+    .map((p, idx) => {
+      let coords = p.coordinates
+      if (idx === 0) {
+        coords = [fromPos.x, fromPos.y, ...coords.slice(2)]
+      }
+      if (idx === lastIdx) {
+        coords = [...coords.slice(0, -2), toPos.x, toPos.y]
+      }
+      return `${p.command} ${coords.join(' ')}`
+    })
     .join(' ')
 }
 
@@ -270,10 +287,12 @@ export default function SchematicMap({
               ? ACTIVE_OPACITY
               : DIM_OPACITY
             : DEFAULT_CONNECTION_OPACITY
+          const fromPos = stationDisplay(from)
+          const toPos = stationDisplay(to)
           return (
             <path
               key={c.id}
-              d={pathPointsToD(c.path)}
+              d={pathPointsToD(c.path, fromPos, toPos)}
               fill="none"
               stroke={lineColor(c.lineCode)}
               strokeWidth={6}
