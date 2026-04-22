@@ -89,13 +89,13 @@ export default function StatsClient({ all, mrt, tra }: Props) {
 
   return (
     <div style={{ maxWidth: 880, margin: '0 auto', padding: '32px 20px 64px' }}>
-      <Link href="/" style={{ color: 'var(--brand-text-muted)', fontSize: 13 }}>
+      <Link href="/" style={{ color: 'var(--ink-muted)', fontSize: 13 }}>
         ← 回首頁
       </Link>
-      <Title level={1} style={{ marginTop: 16, color: 'var(--brand-text)' }}>
+      <Title level={1} style={{ marginTop: 16, color: 'var(--ink)' }}>
         排行榜
       </Title>
-      <Paragraph style={{ color: 'var(--brand-text-muted)' }}>
+      <Paragraph style={{ color: 'var(--ink-muted)' }}>
         哪些車站最常被抽中？跨縣市同名站（例如七堵）會分開計算。
       </Paragraph>
 

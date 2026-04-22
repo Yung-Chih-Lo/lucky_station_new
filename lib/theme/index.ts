@@ -1,17 +1,16 @@
-import type { ThemeConfig } from 'antd'
-import { mrtBrand, mrtTheme } from './mrt'
-import { traBrand, traTheme } from './tra'
+export {
+  accentForMode,
+  accents,
+  mrtTheme,
+  paperTokens,
+  themeFor,
+  traTheme,
+} from './tokens'
+export type { ThemeMode } from './tokens'
 
-export type ThemeMode = 'mrt' | 'tra'
-
-export { mrtBrand, mrtTheme, traBrand, traTheme }
-
-export function themeFor(mode: ThemeMode): ThemeConfig {
-  return mode === 'tra' ? traTheme : mrtTheme
-}
-
-/* Back-compat aliases for code that already imported `brand` / `brandTheme` /
-   `brandCssVars` from the original single-file theme module. These all resolve
-   to the MRT theme so existing imports keep working unchanged. */
-export const brand = mrtBrand
+// Back-compat re-exports: earlier code imported `brand`, `brandTheme`, or the
+// mode-specific `mrtBrand` / `traBrand`. Nothing in the new surface consumes
+// them, but keep them resolvable so a stray import does not break the build.
+import { accents, mrtTheme, paperTokens } from './tokens'
+export const brand = { ...paperTokens, accent: accents.mrt.base }
 export const brandTheme = mrtTheme

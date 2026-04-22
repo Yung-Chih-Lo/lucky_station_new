@@ -345,7 +345,7 @@ export default function SchematicMap({
               textAnchor={s.labelAnchor}
               fontSize={14}
               fontWeight={500}
-              fill={adminMode ? '#333' : 'var(--brand-text)'}
+              fill={adminMode ? '#333' : 'var(--ink)'}
               opacity={opacity}
               style={{
                 userSelect: 'none',
@@ -353,7 +353,7 @@ export default function SchematicMap({
                 pointerEvents: adminMode ? 'all' : 'none',
                 fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
                 paintOrder: adminMode ? undefined : 'stroke',
-                stroke: adminMode ? undefined : 'var(--brand-bg)',
+                stroke: adminMode ? undefined : 'var(--paper-bg)',
                 strokeWidth: adminMode ? undefined : 3,
                 strokeLinejoin: adminMode ? undefined : 'round',
               }}
@@ -430,8 +430,8 @@ function TrainMarker({ animationStations, isAnimating, onAnimationEnd }: TrainMa
     <g transform={`translate(${s.schematicX}, ${s.schematicY})`} pointerEvents="none">
       <circle
         r={11}
-        fill="var(--brand-accent-gold)"
-        stroke="var(--brand-bg)"
+        fill="var(--accent)"
+        stroke="var(--paper-bg)"
         strokeWidth={2}
         style={{ filter: 'drop-shadow(0 1px 4px rgba(212,165,116,0.55))' }}
       />
@@ -441,11 +441,11 @@ function TrainMarker({ animationStations, isAnimating, onAnimationEnd }: TrainMa
         textAnchor="middle"
         fontSize={13}
         fontWeight={700}
-        fill="var(--brand-accent-gold)"
+        fill="var(--accent)"
         style={{
           fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
           paintOrder: 'stroke',
-          stroke: 'var(--brand-bg)',
+          stroke: 'var(--paper-bg)',
           strokeWidth: 3,
           strokeLinejoin: 'round',
         }}

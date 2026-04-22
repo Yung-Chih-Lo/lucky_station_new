@@ -2,7 +2,6 @@
 
 import { Button, Checkbox, Divider } from 'antd'
 import { SwapOutlined } from '@ant-design/icons'
-import Link from 'next/link'
 
 type Props = {
   counties: string[]
@@ -24,13 +23,8 @@ export default function TraSidebar({
   const pickDisabled = noneSelected || isPicking
 
   return (
-    <div className="brand-glass" style={containerStyle}>
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <h1 style={brandTitleStyle}>台鐵籤</h1>
-        <p style={sloganStyle}>選縣市，讓台鐵替你決定下一站</p>
-      </div>
-
-      <p style={sectionLabelStyle}>選擇縣市</p>
+    <div style={containerStyle}>
+      <p style={sectionLabelStyle}>選擇你的出發縣市</p>
 
       <div style={selectRowStyle}>
         <Button
@@ -67,9 +61,9 @@ export default function TraSidebar({
 
       <Divider style={{ margin: '0 0 16px 0' }} />
 
-      {noneSelected && (
-        <p style={hintStyle}>未勾選任何縣市時無法抽籤</p>
-      )}
+      <p style={summaryStyle}>
+        已選 <strong style={{ color: 'var(--ink)' }}>{selectedCounties.length}</strong> 個縣市
+      </p>
 
       <Button
         type="primary"
@@ -80,54 +74,26 @@ export default function TraSidebar({
         loading={isPicking}
         icon={<SwapOutlined />}
       >
-        {isPicking ? '抽籤中…' : '抽幸運車站'}
+        {isPicking ? '抽籤中…' : '抽．下．一．站'}
       </Button>
-
-      <div style={navLinksStyle}>
-        <Link href="/explore" style={navLinkStyle}>
-          旅人心得
-        </Link>
-        <span aria-hidden="true" style={navDividerStyle}>·</span>
-        <Link href="/stats" style={navLinkStyle}>
-          排行榜
-        </Link>
-      </div>
     </div>
   )
 }
 
 const containerStyle: React.CSSProperties = {
-  padding: 20,
-  height: '100%',
   display: 'flex',
   flexDirection: 'column',
-}
-
-const brandTitleStyle: React.CSSProperties = {
-  margin: 0,
-  fontFamily: 'var(--font-serif), "Noto Serif TC", Georgia, serif',
-  fontWeight: 700,
-  fontSize: 32,
-  letterSpacing: '0.08em',
-  color: 'var(--brand-text)',
-}
-
-const sloganStyle: React.CSSProperties = {
-  marginTop: 6,
-  marginBottom: 0,
-  color: 'var(--brand-text-muted)',
-  fontSize: 13,
-  letterSpacing: '0.04em',
+  height: '100%',
 }
 
 const sectionLabelStyle: React.CSSProperties = {
-  textAlign: 'center',
-  fontWeight: 500,
-  marginBottom: 8,
-  color: 'var(--brand-text-muted)',
-  fontSize: 12,
-  letterSpacing: '0.16em',
-  textTransform: 'uppercase',
+  margin: 0,
+  fontFamily: 'var(--font-serif), "Noto Serif TC", ui-serif, serif',
+  fontWeight: 700,
+  marginBottom: 12,
+  color: 'var(--ink)',
+  fontSize: 18,
+  letterSpacing: '0.06em',
 }
 
 const selectRowStyle: React.CSSProperties = {
@@ -142,30 +108,13 @@ const listScrollStyle: React.CSSProperties = {
   overflowY: 'auto',
   paddingRight: 8,
   marginBottom: 16,
-  maxHeight: 360,
+  minHeight: 0,
+  maxHeight: 'clamp(220px, 45vh, 420px)',
 }
 
-const hintStyle: React.CSSProperties = {
+const summaryStyle: React.CSSProperties = {
   margin: '0 0 12px',
-  fontSize: 12,
-  color: 'var(--brand-text-muted)',
-  textAlign: 'center',
-}
-
-const navLinksStyle: React.CSSProperties = {
-  marginTop: 16,
-  display: 'flex',
-  justifyContent: 'center',
-  gap: 8,
   fontSize: 13,
-}
-
-const navLinkStyle: React.CSSProperties = {
-  color: 'var(--brand-text-muted)',
-  textDecoration: 'none',
-}
-
-const navDividerStyle: React.CSSProperties = {
-  color: 'var(--brand-text-muted)',
-  opacity: 0.5,
+  letterSpacing: '0.08em',
+  color: 'var(--ink-muted)',
 }

@@ -1,41 +1,4 @@
-# visual-identity Specification
-
-## Purpose
-Defines the shared visual language of the public-facing picker and community
-pages. Anchors on one paper-based palette, one typography pair, and the
-"Urban Omikuji Press" signature elements so that MRT and TRA modes read as a
-single product whose only per-mode difference is an accent hue.
-## Requirements
-### Requirement: Public-facing brand name and slogan
-The public site SHALL present the brand as **「下一站 · 幸運車站」** with slogan **「搖一搖，讓城市替你決定今天」**. The `<title>` metadata, the top-bar wordmark, and any marketing copy SHALL use this name. The prior strings "Lucky Station", "隨機捷運 GO！", and the emoji 🚇 SHALL NOT appear on any public page. The string "捷運籤" MAY appear only as a historical callout; it SHALL NOT be the primary brand label.
-
-#### Scenario: Home page title metadata
-- **WHEN** a user loads `/`
-- **THEN** the document `<title>` SHALL contain "下一站" or "幸運車站"
-- **AND** the page SHALL NOT contain the literal strings "Lucky Station", "隨機捷運 GO！", or the 🚇 emoji
-
-#### Scenario: Top-bar wordmark
-- **WHEN** the top bar renders on any `(public)` route
-- **THEN** its wordmark SHALL read "下一站" (primary) with "幸運車站" as secondary caption (or a visually equivalent stacked lockup)
-- **AND** the wordmark area SHALL NOT contain any emoji character
-
-### Requirement: Single source of truth for brand tokens
-The system SHALL expose brand tokens (colors, fonts, radii) for both the MRT and TRA themes from one TypeScript module that feeds both the antd `ConfigProvider` themes and CSS custom properties on `<html>`. Hex literals for brand colors SHALL NOT appear inline in component files; components SHALL reference tokens via the antd theme, CSS variables, or re-exported constants. The module SHALL export named theme objects (e.g. `mrtTheme`, `traTheme`), not a single anonymous default.
-
-#### Scenario: Palette change propagates everywhere
-- **WHEN** a brand token value is changed in the single source module
-- **THEN** both the antd CTA button and any custom border/ring on a non-antd element SHALL reflect the new value after reload
-- **AND** no component file SHALL require a separate edit
-
-#### Scenario: Both themes change in lockstep when tokens are renamed
-- **WHEN** the brand tokens module renames a token
-- **THEN** both the MRT theme and the TRA theme exports SHALL reference the new name
-- **AND** components SHALL continue to work after a single coordinated edit
-
-#### Scenario: No hex leaks in components
-- **WHEN** the public component files are scanned
-- **THEN** they SHALL NOT contain brand color hex literals
-- **AND** they MAY reference DB-driven line colors (from `lines.color`) directly, since those are data, not brand tokens
+## MODIFIED Requirements
 
 ### Requirement: Color system — paper base with accent-hue mode swap
 Both MRT and TRA modes SHALL share ONE palette. Mode identity SHALL differ only by a single accent hue; every other token (background, surface, surface-elevated, ink, ink-muted, rule, seal, success, warn) SHALL be identical across modes. The shared base is a warm paper background (`#F3ECDC`) with opaque paper surfaces (`#FFFBF0`) and ink text (`#1A1D2B`). MRT mode SHALL use 朱砂紅 `#E8421C` as the accent. TRA mode SHALL use 鐵道深藍 `#15365C` as the accent. A seal gold `#C8954A` SHALL be reserved for the stamp mark on a successful pick. The 6 Taipei MRT line colors (from the DB) SHALL continue to drive station / connection / line-chip colors in MRT mode and SHALL NOT be overridden.
@@ -111,6 +74,19 @@ The random-pick result modal SHALL reveal the station name using the omikuji rit
 - **THEN** their icons SHALL be inline SVG (e.g. antd `@ant-design/icons`)
 - **AND** their rendered text + accessible name SHALL NOT contain any emoji character
 
+### Requirement: Public-facing brand name and slogan
+The public site SHALL present the brand as **「下一站 · 幸運車站」** with slogan **「搖一搖，讓城市替你決定今天」**. The `<title>` metadata, the top-bar wordmark, and any marketing copy SHALL use this name. The prior strings "Lucky Station", "隨機捷運 GO！", and the emoji 🚇 SHALL NOT appear on any public page. The string "捷運籤" MAY appear only as a historical callout; it SHALL NOT be the primary brand label.
+
+#### Scenario: Home page title metadata
+- **WHEN** a user loads `/`
+- **THEN** the document `<title>` SHALL contain "下一站" or "幸運車站"
+- **AND** the page SHALL NOT contain the literal strings "Lucky Station", "隨機捷運 GO！", or the 🚇 emoji
+
+#### Scenario: Top-bar wordmark
+- **WHEN** the top bar renders on any `(public)` route
+- **THEN** its wordmark SHALL read "下一站" (primary) with "幸運車站" as secondary caption (or a visually equivalent stacked lockup)
+- **AND** the wordmark area SHALL NOT contain any emoji character
+
 ### Requirement: Tab-driven mode switching on the home page
 The home page (`/`) SHALL switch the active mode based on the selected transport tab in the top bar. Mode switching SHALL update both the antd `ConfigProvider` and the `<html data-theme>` attribute so CSS variables and antd components stay synchronized. Tabs SHALL live in the top bar, not inside any page-level component.
 
@@ -152,17 +128,7 @@ The `/explore`, `/stats`, and `/comment` pages SHALL render with the MRT accent 
 - **WHEN** a visitor on `/explore`, `/stats`, or `/comment` clicks a tab in the top bar
 - **THEN** the app SHALL navigate to `/` with that tab active
 
-### Requirement: Interactive elements have visible focus and pointer affordance
-All clickable or focusable elements on the public surface SHALL show a visible focus ring when reached via keyboard and SHALL present `cursor: pointer` on hover for mouse users. Focus rings SHALL be at least 2px wide and SHALL have contrast ≥ 3:1 against the adjacent surface.
-
-#### Scenario: Keyboard focus on CTA
-- **WHEN** the user tabs to the primary CTA button
-- **THEN** a visible focus ring SHALL appear around the button
-- **AND** the ring SHALL be at least 2px wide with at least 3:1 contrast against the button background
-
-#### Scenario: Hover cursor
-- **WHEN** the user hovers any clickable element (CTA, checkbox, pill link, modal close)
-- **THEN** the cursor SHALL be `pointer`
+## ADDED Requirements
 
 ### Requirement: Persistent top bar on all public routes
 Every `(public)` route (`/`, `/explore`, `/stats`, `/comment`) SHALL render a persistent top bar provided by the public layout. The top bar SHALL contain three regions: (a) left — brand wordmark that links to `/`, (b) center — mode tabs (捷運 / 台鐵), (c) right — text links `旅人心得` and `排行榜`. The tabs and social nav SHALL NOT be duplicated inside any page-level component. The top bar SHALL be 64px tall on desktop and separated from the main content area by a 1px `--rule` hairline. No login control SHALL appear in the public top bar; admin authentication remains at `/admin/login` and is not reachable from public navigation.
@@ -205,7 +171,7 @@ The home picker SHALL render as ONE card (the "omikuji paper") containing two in
 - **AND** the internal divider SHALL rotate to horizontal (a 1px `--rule` line above the right pane)
 
 ### Requirement: Paper surface treatment replaces glassmorphism
-The public surface SHALL use opaque paper backgrounds, not glassmorphism. The `.brand-glass` class (translucent white fill + backdrop-filter blur) SHALL NOT be applied to any public card, modal, or sidebar. Cards SHALL use `background: var(--paper-surface)` with a 1px `--rule` border and a subtle two-color offset shadow (`2px 2px 0 --accent, -2px -2px 0 --ink` at low opacity) that evokes printing misregistration. A very subtle paper grain MAY be applied via a background image filter at ≤3% intensity.
+The public surface SHALL use opaque paper backgrounds, not glassmorphism. The `.brand-glass` class (translucent white fill + backdrop-filter blur) SHALL NOT be applied to any public card, modal, or sidebar. Cards SHALL use `background: var(--paper-surface)` with a 1px `--rule` border and a subtle two-color offset shadow (`2px 2px 0 --accent, -2px -2px 0 --ink` at 8% opacity) that evokes printing misregistration. A very subtle SVG noise filter MAY be applied at ≤3% opacity for paper grain.
 
 #### Scenario: No glassmorphism in picker card
 - **WHEN** the picker card renders on any `backdrop-filter`-supporting browser
@@ -220,7 +186,7 @@ The public surface SHALL use opaque paper backgrounds, not glassmorphism. The `.
 #### Scenario: Brand-glass class is not referenced in public components
 - **WHEN** the public component tree (`app/(public)/**`, `components/mrt/**`, `components/tra/**`, `components/omikuji/**`) is scanned
 - **THEN** no element SHALL carry the `className` `brand-glass`
-- **AND** the `.brand-glass` rule SHALL NOT exist in `globals.css`
+- **AND** the `.brand-glass` rule MAY remain in `globals.css` only if it is demonstrably unused (or SHALL be removed)
 
 ### Requirement: Signature visual elements
 The public surface SHALL express four signature elements: (1) a **rail-tick rule** — a horizontal/vertical 1px `--rule` line decorated with repeating short tick marks, used as a divider between top bar and content, between picker panes, and between result-card regions; (2) a **kerf edge** — a dashed top/bottom edge on the omikuji card evoking a torn ticket; (3) a **seal mark** — a circular `--seal` stamp (diameter 56–72px) applied to a result card on a successful pick, containing date and 籤號; (4) a **two-color offset shadow** — a dual-tone micro shadow on cards evoking risograph misregistration. These elements SHALL be implemented as reusable React components or CSS utility classes so consuming pages do not reimplement them.
@@ -238,3 +204,21 @@ The public surface SHALL express four signature elements: (1) a **rail-tick rule
 #### Scenario: Kerf edge on omikuji card
 - **WHEN** the outer omikuji card renders on the home page
 - **THEN** its top and bottom edges SHALL show a dashed kerf (CSS `border-style: dashed` or SVG equivalent at 4px dash / 2px gap)
+
+## REMOVED Requirements
+
+### Requirement: Color system — dark indigo base with gold CTA
+**Reason**: Replaced by the unified paper-based palette with single-hue accent swap. The dark-indigo `#1E1B4B` + gold `#D4A574` identity is retired in favor of paper `#F3ECDC` + 朱砂紅 `#E8421C` (MRT) / 鐵道深藍 `#15365C` (TRA).
+**Migration**: Replace all consumers of `--brand-bg`, `--brand-text`, `--brand-accent-gold`, `--brand-accent`, `--brand-surface`, `--brand-border` with the new token names (`--paper-bg`, `--ink`, `--accent`, `--paper-surface`, `--rule`). Back-compat aliases MAY be kept for one release to avoid a churn-heavy rename.
+
+### Requirement: Glassmorphism surface treatment for cards
+**Reason**: Visually cliché and conflicts with the paper/print metaphor of the new identity. Opaque paper surfaces now carry card affordance.
+**Migration**: Remove `.brand-glass` className usages from public components; replace with the plain card surface style (`background: var(--paper-surface)` + 1px `--rule` border + offset shadow). The `.brand-glass` CSS rule SHOULD be deleted once all usages are gone.
+
+### Requirement: Second public theme — TRA glassmorphism light
+**Reason**: Two full themes are collapsed into one base palette with a single accent swap. The TRA mode is no longer a separate "theme" — it is the shared palette plus `--accent: #15365C`.
+**Migration**: Delete `lib/theme/tra.ts` as a separate theme object. Expose the TRA accent via `accentForMode('tra')` from the unified tokens module. All token consumers continue to work because the token NAMES stay; only values and source module change.
+
+### Requirement: Brand scope is limited to public routes
+**Reason**: Replaced by an equivalent, stricter "Persistent top bar on all public routes" requirement which also pins the layout ownership. The scoping rule (admin untouched) is preserved within that new requirement's implied surface boundary; admin continues to render with antd defaults because the `(public)` layout is the only consumer of the new tokens.
+**Migration**: No component changes beyond the top-bar work. The `brand-public` wrapper class SHALL remain on the `(public)` layout; admin routes remain outside the `(public)` route group and thus never receive the class.

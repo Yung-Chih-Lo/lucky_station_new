@@ -3,6 +3,7 @@
 import { ConfigProvider } from 'antd'
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -18,6 +19,12 @@ type ThemeModeContextValue = {
 
 const ThemeModeContext = createContext<ThemeModeContextValue | null>(null)
 
+const STORAGE_KEY = 'lastTransportTab'
+
+function isThemeMode(v: unknown): v is ThemeMode {
+  return v === 'mrt' || v === 'tra'
+}
+
 export function useThemeMode(): ThemeModeContextValue {
   const ctx = useContext(ThemeModeContext)
   if (!ctx) {
@@ -32,13 +39,34 @@ type Props = {
 }
 
 export default function ThemeProvider({ defaultMode = 'mrt', children }: Props) {
-  const [mode, setMode] = useState<ThemeMode>(defaultMode)
+  const [mode, setModeState] = useState<ThemeMode>(defaultMode)
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY)
+      if (isThemeMode(stored) && stored !== mode) {
+        setModeState(stored)
+      }
+    } catch {
+      // localStorage unavailable
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = mode
   }, [mode])
 
-  const value = useMemo<ThemeModeContextValue>(() => ({ mode, setMode }), [mode])
+  const setMode = useCallback((next: ThemeMode) => {
+    setModeState(next)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next)
+    } catch {
+      // localStorage unavailable
+    }
+  }, [])
+
+  const value = useMemo<ThemeModeContextValue>(() => ({ mode, setMode }), [mode, setMode])
 
   return (
     <ThemeModeContext.Provider value={value}>

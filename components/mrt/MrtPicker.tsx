@@ -6,7 +6,9 @@ import SchematicMap from '../SchematicMap'
 import Sidebar from '../Sidebar'
 import ResultDisplay from '../ResultDisplay'
 import { filterByLines, pickRandomStation } from '@/lib/randomStation'
-import { brand } from '@/lib/theme'
+import { paperTokens } from '@/lib/theme'
+import RevealRitual from '@/components/omikuji/RevealRitual'
+import { ticketNoFromToken, formatPickDate } from '@/lib/ticketNumber'
 import type { CanvasView, ConnectionView, LineView, StationView } from '../types'
 
 const MODAL_TITLES = [
@@ -30,12 +32,18 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationStations, setAnimationStations] = useState<StationView[]>([])
   const [result, setResult] = useState<StationView | null>(null)
+  const [pickToken, setPickToken] = useState<string | null>(null)
+  const [commentCount, setCommentCount] = useState(0)
+  const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [titleIndex, setTitleIndex] = useState(0)
 
   const handleLineChange = (codes: string[]) => {
     setSelectedLineCodes(codes)
     setResult(null)
+    setPickToken(null)
+    setCommentCount(0)
+    setPickPromise(null)
     setModalOpen(false)
   }
 
@@ -46,15 +54,28 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
     setResult(finalStation)
     setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
 
-    // Register the pick on the server (best-effort: don't block UI on errors)
-    void fetch('/api/pick', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transport_type: 'mrt',
-        filter: { line_codes: selectedLineCodes },
-      }),
-    }).catch(() => {})
+    // Register the pick on the server; the returned promise feeds RevealRitual
+    // so it can hold the stamp phase until the token + comment_count land.
+    const request = (async () => {
+      try {
+        const res = await fetch('/api/pick', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transport_type: 'mrt',
+            filter: { line_codes: selectedLineCodes },
+          }),
+        })
+        if (res.ok) {
+          const data = (await res.json()) as { token?: string; comment_count?: number }
+          if (data.token) setPickToken(data.token)
+          if (typeof data.comment_count === 'number') setCommentCount(data.comment_count)
+        }
+      } catch {
+        // ignore; UI will render with a generated fallback token
+      }
+    })()
+    setPickPromise(request)
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) {
@@ -79,32 +100,43 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   }
 
   return (
-    <div style={pageStyle}>
-      <aside style={sidebarAreaStyle}>
-        <Sidebar
-          lines={lines}
-          selectedLineCodes={selectedLineCodes}
-          onLineChange={handleLineChange}
-          onRandomPick={handleRandomPick}
-          isAnimating={isAnimating}
-        />
-      </aside>
+    <div className="omikuji-card" style={cardStyle}>
+      <div style={cardCaptionStyle}>
+        <span>選擇路線 · 搖．下．一．站</span>
+        <span>都市籤詩 · 下一站幸運車站</span>
+      </div>
 
-      <main style={mainAreaStyle}>
-        <h2 style={mapTitleStyle}>台北捷運路網圖</h2>
-        <div style={mapContainerStyle}>
-          <SchematicMap
-            stations={stations}
-            connections={connections}
+      <div className="picker-split">
+        <aside style={leftPaneStyle}>
+          <Sidebar
             lines={lines}
-            canvas={canvas}
             selectedLineCodes={selectedLineCodes}
-            animationStations={animationStations}
+            onLineChange={handleLineChange}
+            onRandomPick={handleRandomPick}
             isAnimating={isAnimating}
-            onAnimationEnd={handleAnimationEnd}
           />
-        </div>
-      </main>
+        </aside>
+
+        <div className="rail-tick-rule is-vertical" aria-hidden="true" />
+        <div className="rail-tick-rule is-horizontal" aria-hidden="true" />
+
+        <main style={mainPaneStyle}>
+          <div style={mapContainerStyle}>
+            <div style={mapInnerStyle}>
+              <SchematicMap
+                stations={stations}
+                connections={connections}
+                lines={lines}
+                canvas={canvas}
+                selectedLineCodes={selectedLineCodes}
+                animationStations={animationStations}
+                isAnimating={isAnimating}
+                onAnimationEnd={handleAnimationEnd}
+              />
+            </div>
+          </div>
+        </main>
+      </div>
 
       <Modal
         title={<span style={modalTitleStyle}>{MODAL_TITLES[titleIndex]}</span>}
@@ -114,65 +146,90 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
         centered
         styles={{
           content: {
-            background: 'var(--brand-surface-strong)',
-            border: '1px solid var(--brand-accent-gold)',
-            backdropFilter: 'blur(24px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+            background: 'var(--paper-surface-elevated)',
+            border: '1px solid var(--rule-strong)',
+            borderRadius: 'var(--radius-lg)',
           },
           header: { background: 'transparent', borderBottom: 'none' },
-          mask: { background: brand.maskBg, backdropFilter: 'blur(6px)' },
+          mask: { background: paperTokens.maskBg },
         }}
       >
-        {modalOpen && <ResultDisplay station={result} lines={lines} />}
+        {modalOpen && result && (
+          <RevealRitual
+            stationName={result.nameZh}
+            stationNameEn={result.nameEn}
+            ticketNo={ticketNoFromToken(pickToken ?? String(result.id))}
+            dateLabel={formatPickDate()}
+            modeLabel="捷運"
+            waitFor={pickPromise}
+          >
+            <ResultDisplay
+              station={result}
+              lines={lines}
+              token={pickToken}
+              commentCount={commentCount}
+            />
+          </RevealRitual>
+        )}
       </Modal>
     </div>
   )
 }
 
-const pageStyle: React.CSSProperties = {
-  display: 'flex',
-  minHeight: '100vh',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-}
-
-const sidebarAreaStyle: React.CSSProperties = {
-  flexShrink: 0,
-  width: 320,
-  padding: 20,
+const cardStyle: React.CSSProperties = {
+  margin: '0 20px',
+  padding: '24px',
   display: 'flex',
   flexDirection: 'column',
+  gap: 16,
+  height: 'calc(93vh - 64px - 16px)',
+  minHeight: 520,
 }
 
-const mainAreaStyle: React.CSSProperties = {
-  flexGrow: 1,
-  padding: '20px 24px 24px',
+const cardCaptionStyle: React.CSSProperties = {
   display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  minWidth: 0,
-}
-
-const mapTitleStyle: React.CSSProperties = {
-  margin: '0 0 14px',
+  justifyContent: 'space-between',
   fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontWeight: 500,
-  fontSize: 13,
+  fontSize: 11,
   letterSpacing: '0.28em',
   textTransform: 'uppercase',
-  color: 'var(--brand-text-muted)',
+  color: 'var(--ink-muted)',
+  padding: '0 6px',
+}
+
+const leftPaneStyle: React.CSSProperties = {
+  padding: '8px 8px 8px 6px',
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
+}
+
+const mainPaneStyle: React.CSSProperties = {
+  padding: '8px 6px 8px 8px',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
 }
 
 const mapContainerStyle: React.CSSProperties = {
   width: '100%',
   flex: 1,
-  minHeight: 420,
-  maxHeight: '82vh',
-  borderRadius: 'var(--brand-radius-lg)',
+  minHeight: 0,
+  borderRadius: 'var(--radius-md)',
   overflow: 'hidden',
-  background:
-    'radial-gradient(800px 600px at 50% 40%, rgba(255,255,255,0.04), transparent 70%), var(--brand-surface)',
-  border: '1px solid var(--brand-border)',
+  background: 'var(--paper-surface)',
+  border: '1px solid var(--rule)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 16,
+}
+
+const mapInnerStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  maxWidth: 640,
+  maxHeight: 640,
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
@@ -186,5 +243,5 @@ const modalTitleStyle: React.CSSProperties = {
   fontWeight: 500,
   letterSpacing: '0.28em',
   textTransform: 'uppercase',
-  color: 'var(--brand-text-muted)',
+  color: 'var(--ink-muted)',
 }

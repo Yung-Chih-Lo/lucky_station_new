@@ -5,6 +5,9 @@ import { Modal, message } from 'antd'
 import TaiwanSvgMap from './TaiwanSvgMap'
 import TraSidebar from './Sidebar'
 import TraResultDisplay from './ResultDisplay'
+import RevealRitual from '@/components/omikuji/RevealRitual'
+import { ticketNoFromToken, formatPickDate } from '@/lib/ticketNumber'
+import { paperTokens } from '@/lib/theme'
 
 const MODAL_TITLES = [
   '下一站開往…',
@@ -22,6 +25,7 @@ type Props = {
 
 type PickResult = {
   token: string
+  comment_count?: number
   station: {
     id: number
     nameZh: string
@@ -47,68 +51,89 @@ export default function TraPicker({ counties, countyToStations }: Props) {
     )
   }
 
-  const handlePick = async () => {
+  const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
+
+  const handlePick = () => {
     if (selectedCounties.length === 0 || isPicking) return
     setIsPicking(true)
-    try {
-      const res = await fetch('/api/pick', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transport_type: 'tra',
-          filter: { counties: selectedCounties },
-        }),
-      })
+    setResult(null)
 
-      if (res.status === 429) {
-        messageApi.warning('太快了！請稍候再試')
-        return
+    // Open the modal immediately so the ritual can start shaking while the
+    // pick request is in flight.
+    const request = (async () => {
+      try {
+        const res = await fetch('/api/pick', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transport_type: 'tra',
+            filter: { counties: selectedCounties },
+          }),
+        })
+
+        if (res.status === 429) {
+          messageApi.warning('太快了！請稍候再試')
+          setModalOpen(false)
+          return
+        }
+        if (res.status === 422) {
+          messageApi.warning('這個範圍內沒有車站可抽')
+          setModalOpen(false)
+          return
+        }
+        if (!res.ok) {
+          messageApi.error('抽籤失敗，請稍後再試')
+          setModalOpen(false)
+          return
+        }
+
+        const data = (await res.json()) as PickResult
+        setResult(data)
+      } catch {
+        messageApi.error('網路錯誤，請稍後再試')
+        setModalOpen(false)
+      } finally {
+        setIsPicking(false)
       }
+    })()
 
-      if (res.status === 422) {
-        messageApi.warning('這個範圍內沒有車站可抽')
-        return
-      }
-
-      if (!res.ok) {
-        messageApi.error('抽籤失敗，請稍後再試')
-        return
-      }
-
-      const data = (await res.json()) as PickResult
-      setResult(data)
-      setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
-      setModalOpen(true)
-    } catch (e) {
-      messageApi.error('網路錯誤，請稍後再試')
-    } finally {
-      setIsPicking(false)
-    }
+    setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
+    setPickPromise(request)
+    setModalOpen(true)
   }
 
   return (
-    <div style={pageStyle}>
+    <div className="omikuji-card" style={cardStyle}>
       {contextHolder}
-      <aside style={sidebarAreaStyle}>
-        <TraSidebar
-          counties={sortedCounties}
-          selectedCounties={selectedCounties}
-          onChange={setSelectedCounties}
-          onPick={handlePick}
-          isPicking={isPicking}
-        />
-      </aside>
+      <div style={cardCaptionStyle}>
+        <span>選擇縣市 · 搖．下．一．站</span>
+        <span>都市籤詩 · 下一站幸運車站</span>
+      </div>
 
-      <main style={mainAreaStyle}>
-        <h2 style={mapTitleStyle}>台灣縣市</h2>
-        <div style={mapContainerStyle}>
-          <TaiwanSvgMap
+      <div className="picker-split">
+        <aside style={leftPaneStyle}>
+          <TraSidebar
+            counties={sortedCounties}
             selectedCounties={selectedCounties}
-            availableCounties={sortedCounties}
-            onToggleCounty={handleToggleCounty}
+            onChange={setSelectedCounties}
+            onPick={handlePick}
+            isPicking={isPicking}
           />
-        </div>
-      </main>
+        </aside>
+
+        <div className="rail-tick-rule is-vertical" aria-hidden="true" />
+        <div className="rail-tick-rule is-horizontal" aria-hidden="true" />
+
+        <main style={mainPaneStyle}>
+          <div style={mapContainerStyle}>
+            <TaiwanSvgMap
+              selectedCounties={selectedCounties}
+              availableCounties={sortedCounties}
+              onToggleCounty={handleToggleCounty}
+            />
+          </div>
+        </main>
+      </div>
 
       <Modal
         title={<span style={modalTitleStyle}>{MODAL_TITLES[titleIndex]}</span>}
@@ -118,74 +143,99 @@ export default function TraPicker({ counties, countyToStations }: Props) {
         centered
         styles={{
           content: {
-            background: 'var(--brand-surface-strong)',
-            border: '1px solid var(--brand-accent)',
-            backdropFilter: 'blur(24px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+            background: 'var(--paper-surface-elevated)',
+            border: '1px solid var(--rule-strong)',
+            borderRadius: 'var(--radius-lg)',
           },
           header: { background: 'transparent', borderBottom: 'none' },
+          mask: { background: paperTokens.maskBg },
         }}
       >
-        {modalOpen && result && (
-          <TraResultDisplay
-            station={result.station}
-            token={result.token}
-            countyPool={selectedCounties}
-            countyToStations={countyToStations}
-          />
+        {modalOpen && (
+          result ? (
+            <RevealRitual
+              stationName={result.station.nameZh}
+              stationNameEn={result.station.nameEn}
+              ticketNo={ticketNoFromToken(result.token)}
+              dateLabel={formatPickDate()}
+              modeLabel="台鐵"
+              waitFor={pickPromise}
+            >
+              <TraResultDisplay
+                station={result.station}
+                token={result.token}
+                commentCount={result.comment_count ?? 0}
+                countyPool={selectedCounties}
+                countyToStations={countyToStations}
+              />
+            </RevealRitual>
+          ) : (
+            <div style={ritualPendingStyle} aria-live="polite">
+              <p style={{ margin: 0, color: 'var(--ink-muted)', letterSpacing: '0.24em' }}>
+                搖 籤 筒…
+              </p>
+            </div>
+          )
         )}
       </Modal>
     </div>
   )
 }
 
-const pageStyle: React.CSSProperties = {
-  display: 'flex',
-  minHeight: '100vh',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-}
-
-const sidebarAreaStyle: React.CSSProperties = {
-  flexShrink: 0,
-  width: 320,
-  padding: 20,
+const cardStyle: React.CSSProperties = {
+  margin: '0 20px',
+  padding: '24px',
   display: 'flex',
   flexDirection: 'column',
+  gap: 16,
+  height: 'calc(93vh - 64px - 16px)',
+  minHeight: 520,
 }
 
-const mainAreaStyle: React.CSSProperties = {
-  flexGrow: 1,
-  padding: '20px 24px 24px',
+const cardCaptionStyle: React.CSSProperties = {
   display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  minWidth: 0,
-}
-
-const mapTitleStyle: React.CSSProperties = {
-  margin: '0 0 14px',
+  justifyContent: 'space-between',
   fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontWeight: 500,
-  fontSize: 13,
+  fontSize: 11,
   letterSpacing: '0.28em',
   textTransform: 'uppercase',
-  color: 'var(--brand-text-muted)',
+  color: 'var(--ink-muted)',
+  padding: '0 6px',
+}
+
+const leftPaneStyle: React.CSSProperties = {
+  padding: '8px 8px 8px 6px',
+  display: 'flex',
+  flexDirection: 'column',
+  minHeight: 0,
+}
+
+const mainPaneStyle: React.CSSProperties = {
+  padding: '8px 6px 8px 8px',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
 }
 
 const mapContainerStyle: React.CSSProperties = {
   width: '100%',
   flex: 1,
-  minHeight: 420,
-  maxHeight: '82vh',
-  borderRadius: 'var(--brand-radius-lg)',
+  minHeight: 0,
+  borderRadius: 'var(--radius-md)',
   overflow: 'hidden',
-  background: 'var(--brand-surface)',
-  border: '1px solid var(--brand-border)',
+  background: 'var(--paper-surface)',
+  border: '1px solid var(--rule)',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
   padding: 16,
+}
+
+const ritualPendingStyle: React.CSSProperties = {
+  minHeight: 240,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }
 
 const modalTitleStyle: React.CSSProperties = {
@@ -196,5 +246,5 @@ const modalTitleStyle: React.CSSProperties = {
   fontWeight: 500,
   letterSpacing: '0.28em',
   textTransform: 'uppercase',
-  color: 'var(--brand-text-muted)',
+  color: 'var(--ink-muted)',
 }

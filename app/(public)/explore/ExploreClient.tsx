@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Empty,
   Input,
@@ -49,6 +50,8 @@ export default function ExploreClient() {
     setMode('mrt')
   }, [setMode])
 
+  const searchParams = useSearchParams()
+  const stationIdParam = searchParams?.get('station_id') ?? null
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -59,6 +62,7 @@ export default function ExploreClient() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      if (stationIdParam) params.set('station_id', stationIdParam)
       if (filter !== 'all') params.set('transport_type', filter)
       if (search.trim()) params.set('q', search.trim())
       params.set('page', String(page))
@@ -71,7 +75,7 @@ export default function ExploreClient() {
     } finally {
       setLoading(false)
     }
-  }, [filter, search, page])
+  }, [filter, search, page, stationIdParam])
 
   useEffect(() => {
     void load()
@@ -84,13 +88,13 @@ export default function ExploreClient() {
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px 64px' }}>
-      <Link href="/" style={{ color: 'var(--brand-text-muted)', fontSize: 13 }}>
+      <Link href="/" style={{ color: 'var(--ink-muted)', fontSize: 13 }}>
         ← 回首頁
       </Link>
-      <Title level={1} style={{ marginTop: 16, color: 'var(--brand-text)' }}>
+      <Title level={1} style={{ marginTop: 16, color: 'var(--ink)' }}>
         旅人心得
       </Title>
-      <Paragraph style={{ color: 'var(--brand-text-muted)' }}>
+      <Paragraph style={{ color: 'var(--ink-muted)' }}>
         每個人在每個車站留下的一段話。
       </Paragraph>
 
@@ -121,7 +125,7 @@ export default function ExploreClient() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {data?.comments.map((c) => (
-              <article key={c.id} className="brand-glass" style={cardStyle}>
+              <article key={c.id} className="omikuji-card" style={cardStyle}>
                 <header style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                   <Tag color={c.transport_type === 'mrt' ? 'purple' : 'orange'} icon={<EnvironmentOutlined />}>
                     {c.name_zh} 車站
@@ -132,7 +136,7 @@ export default function ExploreClient() {
                     <ClockCircleOutlined /> {formatDate(c.created_at)}
                   </Text>
                 </header>
-                <Paragraph style={{ margin: 0, color: 'var(--brand-text)', whiteSpace: 'pre-wrap' }}>
+                <Paragraph style={{ margin: 0, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
                   {c.content}
                 </Paragraph>
               </article>

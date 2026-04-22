@@ -123,10 +123,10 @@ export default function CommentClient() {
   return (
     <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 20px 64px' }}>
       {contextHolder}
-      <Link href="/" style={{ color: 'var(--brand-text-muted)', fontSize: 13 }}>
+      <Link href="/" style={{ color: 'var(--ink-muted)', fontSize: 13 }}>
         ← 回首頁
       </Link>
-      <Title level={1} style={{ marginTop: 16, color: 'var(--brand-text)' }}>
+      <Title level={1} style={{ marginTop: 16, color: 'var(--ink)' }}>
         留下心得
       </Title>
 
@@ -158,11 +158,11 @@ export default function CommentClient() {
 
       {state.kind === 'ok' && (
         <>
-          <div className="brand-glass" style={cardStyle}>
+          <div className="omikuji-card" style={cardStyle}>
             <Text type="secondary" style={{ fontSize: 12, letterSpacing: '0.16em' }}>
               你抽到的是
             </Text>
-            <Title level={2} style={{ margin: '8px 0', color: 'var(--brand-text)' }}>
+            <Title level={2} style={{ margin: '8px 0', color: 'var(--ink)' }}>
               {state.info.station.name_zh} 車站
             </Title>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -193,7 +193,7 @@ export default function CommentClient() {
 
           {state.info.comment_used === 0 && !submitted && (
             <div style={{ marginTop: 24 }}>
-              <Paragraph style={{ color: 'var(--brand-text-muted)' }}>
+              <Paragraph style={{ color: 'var(--ink-muted)' }}>
                 寫下你在這個車站的故事或感受（10–500 字）。送出後不能修改或刪除。
               </Paragraph>
               <TextArea
@@ -234,11 +234,11 @@ export default function CommentClient() {
           )}
 
           {submitted && (
-            <div className="brand-glass" style={{ ...cardStyle, marginTop: 24 }}>
-              <Title level={3} style={{ marginTop: 0, color: 'var(--brand-text)' }}>
+            <div className="omikuji-card" style={{ ...cardStyle, marginTop: 24 }}>
+              <Title level={3} style={{ marginTop: 0, color: 'var(--ink)' }}>
                 送出了，謝謝你
               </Title>
-              <Paragraph style={{ color: 'var(--brand-text-muted)', whiteSpace: 'pre-wrap' }}>
+              <Paragraph style={{ color: 'var(--ink-muted)', whiteSpace: 'pre-wrap' }}>
                 {trimmed}
               </Paragraph>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>

@@ -1,15 +1,19 @@
 'use client'
 
+import Link from 'next/link'
 import { Empty } from 'antd'
 import { EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
+import ShareableTicket from './omikuji/ShareableTicket'
 import type { LineView, StationView } from './types'
 
 type Props = {
   station: StationView | null
   lines: LineView[]
+  token?: string | null
+  commentCount?: number
 }
 
-export default function ResultDisplay({ station, lines }: Props) {
+export default function ResultDisplay({ station, lines, token, commentCount = 0 }: Props) {
   if (!station) {
     return (
       <div style={containerStyle}>
@@ -40,7 +44,7 @@ export default function ResultDisplay({ station, lines }: Props) {
               key={code}
               style={{
                 ...chipStyle,
-                backgroundColor: line?.color ?? 'var(--brand-surface-strong)',
+                backgroundColor: line?.color ?? 'var(--paper-surface-elevated)',
               }}
             >
               {line?.nameZh ?? code}
@@ -59,6 +63,27 @@ export default function ResultDisplay({ station, lines }: Props) {
           <span>Google Maps</span>
         </a>
       </div>
+
+      {token && (
+        <div style={{ width: '100%', marginTop: 18 }}>
+          <ShareableTicket token={token} stationNameZh={station.nameZh} />
+        </div>
+      )}
+
+      <Link
+        href={
+          commentCount > 0
+            ? `/explore?station_id=${station.id}`
+            : token
+            ? `/comment?token=${encodeURIComponent(token)}`
+            : `/explore?station_id=${station.id}`
+        }
+        style={deepLinkStyle}
+      >
+        {commentCount > 0
+          ? `已有 ${commentCount} 位旅人抽到這站 · 看他們寫了什麼 →`
+          : '搶先留下這一站的心得 →'}
+      </Link>
     </div>
   )
 }
@@ -70,12 +95,12 @@ const containerStyle: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   minHeight: 200,
-  color: 'var(--brand-text)',
+  color: 'var(--ink)',
 }
 
 const eyebrowStyle: React.CSSProperties = {
   margin: 0,
-  color: 'var(--brand-text-muted)',
+  color: 'var(--ink-muted)',
   fontSize: 12,
   letterSpacing: '0.24em',
   textTransform: 'uppercase',
@@ -83,17 +108,17 @@ const eyebrowStyle: React.CSSProperties = {
 
 const stationNameStyle: React.CSSProperties = {
   margin: '10px 0 4px',
-  fontFamily: 'var(--font-serif), "Noto Serif TC", Georgia, serif',
-  fontWeight: 700,
+  fontFamily: 'var(--font-serif), "Noto Serif TC", ui-serif, serif',
+  fontWeight: 900,
   fontSize: 56,
   lineHeight: 1.1,
   letterSpacing: '0.04em',
-  color: 'var(--brand-text)',
+  color: 'var(--ink)',
 }
 
 const stationEnStyle: React.CSSProperties = {
   margin: 0,
-  color: 'var(--brand-text-muted)',
+  color: 'var(--ink-muted)',
   fontSize: 13,
   letterSpacing: '0.08em',
 }
@@ -123,7 +148,7 @@ const linksRowStyle: React.CSSProperties = {
   gap: 10,
   marginTop: 22,
   paddingTop: 18,
-  borderTop: '1px solid var(--brand-border)',
+  borderTop: '1px solid var(--rule)',
   width: '100%',
   flexWrap: 'wrap',
 }
@@ -134,11 +159,20 @@ const linkPillStyle: React.CSSProperties = {
   gap: 6,
   padding: '8px 16px',
   borderRadius: 999,
-  border: '1px solid var(--brand-accent-gold)',
-  color: 'var(--brand-accent-gold)',
+  border: '1px solid var(--accent)',
+  color: 'var(--accent)',
   textDecoration: 'none',
   fontSize: 13,
   fontWeight: 500,
   transition: 'background-color 200ms ease, color 200ms ease',
   cursor: 'pointer',
+}
+
+const deepLinkStyle: React.CSSProperties = {
+  marginTop: 16,
+  fontSize: 13,
+  color: 'var(--ink-muted)',
+  textDecoration: 'none',
+  letterSpacing: '0.04em',
+  textAlign: 'center',
 }

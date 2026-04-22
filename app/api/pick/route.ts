@@ -62,7 +62,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'token_collision' }, { status: 500 })
   }
 
-  return NextResponse.json({ token, station })
+  const countRow = sqlite
+    .prepare<[number], { n: number }>(
+      'SELECT COUNT(*) AS n FROM comments WHERE station_id = ?',
+    )
+    .get(station.id)
+  const comment_count = countRow?.n ?? 0
+
+  return NextResponse.json({ token, station, comment_count })
 }
 
 function isUniqueError(err: unknown): boolean {

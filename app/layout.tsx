@@ -12,15 +12,15 @@ const notoSans = Noto_Sans_TC({
 })
 
 const notoSerif = Noto_Serif_TC({
-  weight: ['500', '700'],
+  weight: ['500', '900'],
   subsets: ['latin'],
   variable: '--font-serif',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: '捷運籤 | 搖一搖，捷運替你決定今天',
-  description: '選幾條線，搖一搖，讓捷運替你決定今天的目的地。台北捷運隨機籤站。',
+  title: '下一站 · 幸運車站 | 搖一搖，讓城市替你決定今天',
+  description: '選路線或縣市，搖一搖，讓下一站幸運車站替你決定今天的目的地。都市籤詩。台北捷運與台鐵隨機籤站。',
   icons: { icon: '/train.png' },
 }
 

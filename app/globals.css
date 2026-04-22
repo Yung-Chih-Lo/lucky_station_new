@@ -1,5 +1,6 @@
-/* Theme tokens are defined under [data-theme="mrt"] (default) and [data-theme="tra"].
-   See lib/theme/{mrt,tra}.ts for the source of truth — values here mirror those. */
+/* Token values mirror lib/theme/tokens.ts (source of truth). Both MRT and TRA
+   share every token except --accent (and its derivatives). See the design doc
+   under openspec/changes/redesign-omikuji-ui/ for the Omikuji Press system. */
 
 html, body {
   margin: 0;
@@ -14,50 +15,33 @@ body {
 
 :root,
 [data-theme="mrt"] {
-  --brand-bg: #1E1B4B;
-  --brand-bg-image: radial-gradient(
-    1200px 800px at 50% -10%,
-    rgba(212, 165, 116, 0.08),
-    transparent 60%
-  );
-  --brand-surface: rgba(255, 255, 255, 0.06);
-  --brand-surface-strong: rgba(255, 255, 255, 0.10);
-  --brand-text: #F5F3FF;
-  --brand-text-muted: #A5B4FC;
-  --brand-accent: #D4A574;
-  --brand-accent-hover: #E0B889;
-  --brand-on-accent: #1E1B4B;
-  --brand-border: rgba(255, 255, 255, 0.12);
-  --brand-border-strong: rgba(255, 255, 255, 0.22);
-  --brand-radius-sm: 6px;
-  --brand-radius-md: 10px;
-  --brand-radius-lg: 16px;
-  --brand-glass-blur: 16px;
+  --paper-bg: #F3ECDC;
+  --paper-surface: #FFFBF0;
+  --paper-surface-elevated: #FFFFFF;
+  --ink: #1A1D2B;
+  --ink-muted: #6B6557;
+  --rule: rgba(26, 29, 43, 0.15);
+  --rule-strong: rgba(26, 29, 43, 0.28);
+  --seal: #C8954A;
+  --success: #2F7D4F;
+  --warn: #F2B63D;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 
-  /* Back-compat alias for components still using --brand-accent-gold */
-  --brand-accent-gold: var(--brand-accent);
-  --brand-accent-gold-hover: var(--brand-accent-hover);
+  --accent: #E8421C;
+  --accent-hover: #F25A36;
+  --accent-active: #C6361A;
+  --accent-soft: rgba(232, 66, 28, 0.12);
+  --on-accent: #FFFFFF;
 }
 
 [data-theme="tra"] {
-  --brand-bg: #f0f9ff;
-  --brand-bg-image: linear-gradient(135deg, #fef9e7 0%, #e0f2fe 100%);
-  --brand-surface: rgba(255, 255, 255, 0.65);
-  --brand-surface-strong: rgba(255, 255, 255, 0.85);
-  --brand-text: #1a1a2e;
-  --brand-text-muted: #475569;
-  --brand-accent: #F97316;
-  --brand-accent-hover: #FB923C;
-  --brand-on-accent: #FFFFFF;
-  --brand-border: rgba(15, 23, 42, 0.10);
-  --brand-border-strong: rgba(15, 23, 42, 0.20);
-  --brand-radius-sm: 6px;
-  --brand-radius-md: 12px;
-  --brand-radius-lg: 20px;
-  --brand-glass-blur: 15px;
-
-  --brand-accent-gold: var(--brand-accent);
-  --brand-accent-gold-hover: var(--brand-accent-hover);
+  --accent: #15365C;
+  --accent-hover: #1F4A78;
+  --accent-active: #0F2A49;
+  --accent-soft: rgba(21, 54, 92, 0.12);
+  --on-accent: #FFFFFF;
 }
 
 html, body {
@@ -70,11 +54,9 @@ html, body {
   }
 }
 
-/* Applied in app/(public)/layout.tsx; admin routes never get this class. */
 .brand-public {
-  background: var(--brand-bg);
-  background-image: var(--brand-bg-image);
-  color: var(--brand-text);
+  background: var(--paper-bg);
+  color: var(--ink);
   min-height: 100vh;
   transition: background 200ms ease, color 200ms ease;
 }
@@ -85,24 +67,86 @@ html, body {
   }
 }
 
-.brand-glass {
-  background: var(--brand-surface);
-  border: 1px solid var(--brand-border);
-  border-radius: var(--brand-radius-lg);
-  backdrop-filter: blur(var(--brand-glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--brand-glass-blur)) saturate(140%);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .brand-glass {
-    background: var(--brand-surface-strong);
-  }
-}
-
 .brand-public :where(button, [role="button"], a, input, [tabindex]):focus-visible {
-  outline: 2px solid var(--brand-accent);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--brand-radius-sm);
+  border-radius: var(--radius-sm);
+}
+
+/* Paper surface shared by the omikuji card and any other card-shaped surface.
+   Dual-tone offset shadow evokes risograph misregistration. */
+.omikuji-card {
+  position: relative;
+  background: var(--paper-surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    2px 2px 0 0 var(--accent-soft),
+    -2px -2px 0 0 rgba(26, 29, 43, 0.06);
+}
+
+.omikuji-card::before,
+.omikuji-card::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  height: 0;
+  border-top: 1px dashed var(--rule-strong);
+  pointer-events: none;
+}
+
+.omikuji-card::before { top: 10px; }
+.omikuji-card::after  { bottom: 10px; }
+
+/* Rail-tick rule: dividers decorated with short railroad-sleeper ticks. */
+.rail-tick-rule {
+  flex-shrink: 0;
+  background-color: var(--rule);
+}
+
+.rail-tick-rule.is-horizontal {
+  width: 100%;
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--rule-strong) 0,
+    var(--rule-strong) 4px,
+    transparent 4px,
+    transparent 12px
+  );
+}
+
+.rail-tick-rule.is-vertical {
+  width: 1px;
+  align-self: stretch;
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--rule-strong) 0,
+    var(--rule-strong) 4px,
+    transparent 4px,
+    transparent 12px
+  );
+}
+
+.picker-split {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1px 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.picker-split > .rail-tick-rule.is-horizontal { display: none; }
+
+@media (max-width: 960px) {
+  .picker-split {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .picker-split > .rail-tick-rule.is-vertical { display: none; }
+  .picker-split > .rail-tick-rule.is-horizontal { display: block; }
 }
 
 .tra-map-wrapper {
@@ -116,42 +160,43 @@ html, body {
 .tra-map-svg {
   width: 100%;
   height: auto;
-  max-height: 100%;
+  max-height: 640px;
+  max-width: 440px;
   display: block;
 }
 
 .tra-map-region {
-  fill: var(--brand-surface-strong);
-  stroke: var(--brand-border-strong);
+  fill: var(--paper-surface);
+  stroke: var(--rule-strong);
   stroke-width: 1.5;
   cursor: pointer;
   transition: fill 180ms ease, opacity 180ms ease;
 }
 
 .tra-map-region:hover {
-  fill: var(--brand-accent-hover);
-  opacity: 0.85;
+  fill: var(--accent-soft);
+  opacity: 1;
 }
 
 .tra-map-region.is-selected {
-  fill: var(--brand-accent);
+  fill: var(--accent);
   opacity: 1;
 }
 
 .tra-map-region.is-selected:hover {
-  fill: var(--brand-accent-hover);
+  fill: var(--accent-hover);
 }
 
 .tra-map-region.is-disabled {
-  fill: var(--brand-surface);
-  opacity: 0.45;
+  fill: var(--paper-bg);
+  opacity: 0.6;
   cursor: not-allowed;
   pointer-events: none;
 }
 
 .tra-map-region:focus-visible {
   outline: none;
-  stroke: var(--brand-accent);
+  stroke: var(--accent);
   stroke-width: 3;
 }
 
@@ -164,8 +209,136 @@ html, body {
   animation: brand-reveal 400ms ease-out both;
 }
 
+@keyframes omikuji-shake {
+  0%   { transform: translateX(0)    rotate(0);       }
+  15%  { transform: translateX(-4px) rotate(-1.2deg); }
+  30%  { transform: translateX(4px)  rotate(1.2deg);  }
+  45%  { transform: translateX(-3px) rotate(-0.8deg); }
+  60%  { transform: translateX(3px)  rotate(0.8deg);  }
+  75%  { transform: translateX(-1px) rotate(-0.3deg); }
+  100% { transform: translateX(0)    rotate(0);       }
+}
+
+@keyframes omikuji-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes omikuji-flash {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+@keyframes omikuji-stamp {
+  0%   { transform: scale(1.6) rotate(18deg); opacity: 0; }
+  60%  { transform: scale(0.92) rotate(-12deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+
+@keyframes omikuji-char-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes omikuji-body-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes omikuji-stage-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.94); }
+}
+
+.omikuji-ritual {
+  position: relative;
+}
+
+.omikuji-ritual.is-shaking {
+  animation: omikuji-shake 300ms ease-in-out both;
+}
+
+.omikuji-ritual-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 40%, var(--accent) 0%, var(--warn) 40%, transparent 70%);
+  opacity: 0;
+}
+
+.omikuji-ritual.is-flashing .omikuji-ritual-flash {
+  animation: omikuji-flash 420ms ease-out both;
+}
+
+.omikuji-ritual-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  padding: 24px;
+}
+
+.omikuji-ritual.is-popping .omikuji-ritual-stage {
+  animation: omikuji-pop 380ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+.omikuji-ritual.is-stamped .omikuji-ritual-stage {
+  animation: omikuji-stage-out 300ms ease-out 80ms both;
+}
+
+.omikuji-ritual-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.omikuji-ritual.is-typing .omikuji-ritual-char {
+  animation: omikuji-char-in 260ms cubic-bezier(0.22, 1.0, 0.4, 1) both;
+}
+
+.omikuji-ritual-body {
+  position: relative;
+  opacity: 0;
+}
+
+.omikuji-ritual.is-stamped .omikuji-ritual-body {
+  animation: omikuji-body-in 360ms ease-out 120ms both;
+}
+
+.omikuji-ritual-seal {
+  display: inline-flex;
+  opacity: 0;
+}
+
+.omikuji-ritual.is-stamped .omikuji-ritual-seal {
+  animation: omikuji-stamp 260ms cubic-bezier(0.4, 1.4, 0.4, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .brand-reveal {
+  .brand-reveal,
+  .omikuji-ritual.is-shaking,
+  .omikuji-ritual.is-popping .omikuji-ritual-stage,
+  .omikuji-ritual.is-stamped .omikuji-ritual-stage,
+  .omikuji-ritual.is-typing .omikuji-ritual-char,
+  .omikuji-ritual.is-flashing .omikuji-ritual-flash,
+  .omikuji-ritual.is-stamped .omikuji-ritual-body,
+  .omikuji-ritual.is-stamped .omikuji-ritual-seal {
     animation: none;
+  }
+  .omikuji-ritual-char,
+  .omikuji-ritual-body,
+  .omikuji-ritual-seal {
+    opacity: 1;
+    transform: none;
+  }
+  .omikuji-ritual-stage {
+    display: none;
   }
 }

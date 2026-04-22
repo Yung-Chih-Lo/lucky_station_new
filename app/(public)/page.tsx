@@ -74,7 +74,7 @@ export default function HomePage() {
 
   if (stations.length === 0) {
     return (
-      <main style={{ padding: 24, color: 'var(--brand-text)' }}>
+      <main style={{ padding: 24, color: 'var(--ink)' }}>
         <h1>捷運籤</h1>
         <p>Database is empty. Run <code>npm run migrate &amp;&amp; npm run seed</code>.</p>
       </main>
