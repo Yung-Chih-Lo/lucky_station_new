@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Noto_Sans_TC, Noto_Serif_TC } from 'next/font/google'
 import { AntdRegistry } from '@ant-design/nextjs-registry'
-import { brandCssVars } from '@/lib/theme'
 import './globals.css'
 
 const notoSans = Noto_Sans_TC({
@@ -27,10 +26,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="zh-TW" className={`${notoSans.variable} ${notoSerif.variable}`}>
-      <head>
-        <style dangerouslySetInnerHTML={{ __html: brandCssVars() }} />
-      </head>
+    <html
+      lang="zh-TW"
+      data-theme="mrt"
+      className={`${notoSans.variable} ${notoSerif.variable}`}
+    >
       <body>
         <AntdRegistry>{children}</AntdRegistry>
       </body>

@@ -7,10 +7,13 @@ import * as schema from './schema'
 
 type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>
 
-let cached: DrizzleDb | null = null
+let cachedDrizzle: DrizzleDb | null = null
+let cachedSqlite: Database.Database | null = null
 
-export function getDb(): DrizzleDb {
-  if (cached) return cached
+function open(): { sqlite: Database.Database; db: DrizzleDb } {
+  if (cachedDrizzle && cachedSqlite) {
+    return { sqlite: cachedSqlite, db: cachedDrizzle }
+  }
 
   const dbPath = process.env.DATABASE_PATH
   if (!dbPath) {
@@ -24,6 +27,15 @@ export function getDb(): DrizzleDb {
   sqlite.pragma('journal_mode = WAL')
   sqlite.pragma('foreign_keys = ON')
 
-  cached = drizzle(sqlite, { schema })
-  return cached
+  cachedSqlite = sqlite
+  cachedDrizzle = drizzle(sqlite, { schema })
+  return { sqlite: cachedSqlite, db: cachedDrizzle }
+}
+
+export function getDb(): DrizzleDb {
+  return open().db
+}
+
+export function getSqlite(): Database.Database {
+  return open().sqlite
 }

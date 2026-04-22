@@ -1,182 +1,91 @@
 'use client'
 
-import { useState } from 'react'
-import { Modal } from 'antd'
-import SchematicMap from './SchematicMap'
-import Sidebar from './Sidebar'
-import ResultDisplay from './ResultDisplay'
-import { filterByLines, pickRandomStation } from '@/lib/randomStation'
-import { brand } from '@/lib/theme'
+import { useEffect, useState } from 'react'
+import { Tabs } from 'antd'
+import MrtPicker from './mrt/MrtPicker'
+import TraPicker from './tra/TraPicker'
+import { useThemeMode } from './ThemeProvider'
+import type { ThemeMode } from '@/lib/theme'
 import type { CanvasView, ConnectionView, LineView, StationView } from './types'
 
-const MODAL_TITLES = [
-  '下一班列車開往…',
-  '命運決定了…',
-  '今天的籤',
-  '捷運替你選的是',
-]
-
-const INTERMEDIATE_HOPS = 12
+const STORAGE_KEY = 'lastTransportTab'
 
 type Props = {
-  stations: StationView[]
-  connections: ConnectionView[]
-  lines: LineView[]
-  canvas: CanvasView
+  mrt: {
+    stations: StationView[]
+    connections: ConnectionView[]
+    lines: LineView[]
+    canvas: CanvasView
+  }
+  tra: {
+    counties: string[]
+    countyToStations: Record<string, string[]>
+  }
 }
 
-export default function HomeClient({ stations, connections, lines, canvas }: Props) {
-  const [selectedLineCodes, setSelectedLineCodes] = useState<string[]>([])
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [animationStations, setAnimationStations] = useState<StationView[]>([])
-  const [result, setResult] = useState<StationView | null>(null)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [titleIndex, setTitleIndex] = useState(0)
+function isThemeMode(v: string | null): v is ThemeMode {
+  return v === 'mrt' || v === 'tra'
+}
 
-  const handleLineChange = (codes: string[]) => {
-    setSelectedLineCodes(codes)
-    setResult(null)
-    setModalOpen(false)
-  }
+export default function HomeClient({ mrt, tra }: Props) {
+  const { mode, setMode } = useThemeMode()
+  const [hydrated, setHydrated] = useState(false)
 
-  const handleRandomPick = () => {
-    const finalStation = pickRandomStation(stations, selectedLineCodes)
-    if (!finalStation) return
-
-    setResult(finalStation)
-    setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
-
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReduced) {
-      setAnimationStations([])
-      setModalOpen(true)
-      return
+  useEffect(() => {
+    setHydrated(true)
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY)
+      if (isThemeMode(stored) && stored !== mode) {
+        setMode(stored)
+      }
+    } catch {
+      // localStorage may be unavailable; ignore
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-    const pool = filterByLines(stations, selectedLineCodes)
-    const intermediates = Array.from(
-      { length: INTERMEDIATE_HOPS },
-      () => pool[Math.floor(Math.random() * pool.length)],
-    )
-
-    setAnimationStations([...intermediates, finalStation])
-    setIsAnimating(true)
-  }
-
-  const handleAnimationEnd = () => {
-    setIsAnimating(false)
-    setModalOpen(true)
+  const handleTabChange = (key: string) => {
+    if (!isThemeMode(key)) return
+    setMode(key)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, key)
+    } catch {
+      // ignore
+    }
   }
 
   return (
-    <div style={pageStyle}>
-      <aside style={sidebarAreaStyle}>
-        <Sidebar
-          lines={lines}
-          selectedLineCodes={selectedLineCodes}
-          onLineChange={handleLineChange}
-          onRandomPick={handleRandomPick}
-          isAnimating={isAnimating}
-        />
-      </aside>
-
-      <main style={mainAreaStyle}>
-        <h2 style={mapTitleStyle}>台北捷運路網圖</h2>
-        <div style={mapContainerStyle}>
-          <SchematicMap
-            stations={stations}
-            connections={connections}
-            lines={lines}
-            canvas={canvas}
-            selectedLineCodes={selectedLineCodes}
-            animationStations={animationStations}
-            isAnimating={isAnimating}
-            onAnimationEnd={handleAnimationEnd}
-          />
-        </div>
-      </main>
-
-      <Modal
-        title={
-          <span style={modalTitleStyle}>{MODAL_TITLES[titleIndex]}</span>
-        }
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        footer={null}
+    <div style={{ padding: '12px 20px 0' }}>
+      <Tabs
+        activeKey={mode}
+        onChange={handleTabChange}
+        size="large"
         centered
-        styles={{
-          content: {
-            background: 'var(--brand-surface-strong)',
-            border: '1px solid var(--brand-accent-gold)',
-            backdropFilter: 'blur(24px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+        // Mount both panels so internal state survives tab switches
+        items={[
+          {
+            key: 'mrt',
+            label: '捷運',
+            children: hydrated ? (
+              <MrtPicker
+                stations={mrt.stations}
+                connections={mrt.connections}
+                lines={mrt.lines}
+                canvas={mrt.canvas}
+              />
+            ) : null,
+            forceRender: true,
           },
-          header: { background: 'transparent', borderBottom: 'none' },
-          mask: { background: brand.maskBg, backdropFilter: 'blur(6px)' },
-        }}
-      >
-        {modalOpen && <ResultDisplay station={result} lines={lines} />}
-      </Modal>
+          {
+            key: 'tra',
+            label: '台鐵',
+            children: hydrated ? (
+              <TraPicker counties={tra.counties} countyToStations={tra.countyToStations} />
+            ) : null,
+            forceRender: true,
+          },
+        ]}
+      />
     </div>
   )
-}
-
-const pageStyle: React.CSSProperties = {
-  display: 'flex',
-  minHeight: '100vh',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-}
-
-const sidebarAreaStyle: React.CSSProperties = {
-  flexShrink: 0,
-  width: 320,
-  padding: 20,
-  display: 'flex',
-  flexDirection: 'column',
-}
-
-const mainAreaStyle: React.CSSProperties = {
-  flexGrow: 1,
-  padding: '20px 24px 24px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  minWidth: 0,
-}
-
-const mapTitleStyle: React.CSSProperties = {
-  margin: '0 0 14px',
-  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontWeight: 500,
-  fontSize: 13,
-  letterSpacing: '0.28em',
-  textTransform: 'uppercase',
-  color: 'var(--brand-text-muted)',
-}
-
-const mapContainerStyle: React.CSSProperties = {
-  width: '100%',
-  flex: 1,
-  minHeight: 420,
-  maxHeight: '82vh',
-  borderRadius: 'var(--brand-radius-lg)',
-  overflow: 'hidden',
-  background:
-    'radial-gradient(800px 600px at 50% 40%, rgba(255,255,255,0.04), transparent 70%), var(--brand-surface)',
-  border: '1px solid var(--brand-border)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-}
-
-const modalTitleStyle: React.CSSProperties = {
-  display: 'block',
-  textAlign: 'center',
-  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontSize: 12,
-  fontWeight: 500,
-  letterSpacing: '0.28em',
-  textTransform: 'uppercase',
-  color: 'var(--brand-text-muted)',
 }

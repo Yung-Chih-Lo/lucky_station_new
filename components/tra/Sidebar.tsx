@@ -3,75 +3,63 @@
 import { Button, Checkbox, Divider } from 'antd'
 import { SwapOutlined } from '@ant-design/icons'
 import Link from 'next/link'
-import type { LineView } from './types'
 
 type Props = {
-  lines: LineView[]
-  selectedLineCodes: string[]
-  onLineChange: (codes: string[]) => void
-  onRandomPick: () => void
-  isAnimating: boolean
+  counties: string[]
+  selectedCounties: string[]
+  onChange: (counties: string[]) => void
+  onPick: () => void
+  isPicking: boolean
 }
 
-export default function Sidebar({
-  lines,
-  selectedLineCodes,
-  onLineChange,
-  onRandomPick,
-  isAnimating,
+export default function TraSidebar({
+  counties,
+  selectedCounties,
+  onChange,
+  onPick,
+  isPicking,
 }: Props) {
-  const allCodes = lines.map((l) => l.code)
-  const pickDisabled = selectedLineCodes.length === 0 || isAnimating
+  const allSelected = selectedCounties.length === counties.length
+  const noneSelected = selectedCounties.length === 0
+  const pickDisabled = noneSelected || isPicking
 
   return (
     <div className="brand-glass" style={containerStyle}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <h1 style={brandTitleStyle}>捷運籤</h1>
-        <p style={sloganStyle}>搖一搖，捷運替你決定今天</p>
+        <h1 style={brandTitleStyle}>台鐵籤</h1>
+        <p style={sloganStyle}>選縣市，讓台鐵替你決定下一站</p>
       </div>
 
-      <p style={sectionLabelStyle}>選擇想搭的路線</p>
+      <p style={sectionLabelStyle}>選擇縣市</p>
 
       <div style={selectRowStyle}>
         <Button
           type="link"
           size="small"
-          onClick={() => onLineChange(allCodes)}
-          disabled={selectedLineCodes.length === allCodes.length}
+          onClick={() => onChange(counties)}
+          disabled={allSelected}
         >
           全選
         </Button>
         <Button
           type="link"
           size="small"
-          onClick={() => onLineChange([])}
-          disabled={selectedLineCodes.length === 0}
+          onClick={() => onChange([])}
+          disabled={noneSelected}
         >
-          全部取消
+          清除
         </Button>
       </div>
 
       <div style={listScrollStyle}>
         <Checkbox.Group
           style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-          value={selectedLineCodes}
-          onChange={(vals) => onLineChange(vals as string[])}
+          value={selectedCounties}
+          onChange={(vals) => onChange(vals as string[])}
         >
-          {lines.map((line) => (
-            <Checkbox key={line.code} value={line.code}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: 12,
-                  height: 12,
-                  backgroundColor: line.color,
-                  borderRadius: '50%',
-                  marginRight: 8,
-                  verticalAlign: 'middle',
-                  boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.25)',
-                }}
-              />
-              {line.nameZh ?? line.code}
+          {counties.map((county) => (
+            <Checkbox key={county} value={county}>
+              {county}
             </Checkbox>
           ))}
         </Checkbox.Group>
@@ -79,16 +67,20 @@ export default function Sidebar({
 
       <Divider style={{ margin: '0 0 16px 0' }} />
 
+      {noneSelected && (
+        <p style={hintStyle}>未勾選任何縣市時無法抽籤</p>
+      )}
+
       <Button
         type="primary"
         block
         size="large"
-        onClick={onRandomPick}
+        onClick={onPick}
         disabled={pickDisabled}
-        loading={isAnimating}
+        loading={isPicking}
         icon={<SwapOutlined />}
       >
-        {isAnimating ? '列車行駛中…' : '搖籤 · 抽一站'}
+        {isPicking ? '抽籤中…' : '抽幸運車站'}
       </Button>
 
       <div style={navLinksStyle}>
@@ -150,6 +142,14 @@ const listScrollStyle: React.CSSProperties = {
   overflowY: 'auto',
   paddingRight: 8,
   marginBottom: 16,
+  maxHeight: 360,
+}
+
+const hintStyle: React.CSSProperties = {
+  margin: '0 0 12px',
+  fontSize: 12,
+  color: 'var(--brand-text-muted)',
+  textAlign: 'center',
 }
 
 const navLinksStyle: React.CSSProperties = {

@@ -87,8 +87,8 @@ function main(): void {
     // lines
     for (const code of usedLineCodes) {
       db.run(
-        sql`INSERT OR IGNORE INTO lines (code, name_zh, color)
-            VALUES (${code}, ${LINE_NAMES_ZH[code] ?? null}, ${LINE_COLORS[code] ?? '#999'})`,
+        sql`INSERT OR IGNORE INTO lines (code, transport_type, name_zh, color)
+            VALUES (${code}, 'mrt', ${LINE_NAMES_ZH[code] ?? null}, ${LINE_COLORS[code] ?? '#999'})`,
       )
     }
 
@@ -96,9 +96,9 @@ function main(): void {
     for (const s of raw.stations) {
       db.run(sql`
         INSERT OR IGNORE INTO stations
-          (id, name_zh, name_en, lat, lng, schematic_x, schematic_y, label_x, label_y, label_anchor, updated_at)
+          (id, transport_type, name_zh, name_en, lat, lng, schematic_x, schematic_y, label_x, label_y, label_anchor, updated_at)
         VALUES
-          (${s.id}, ${s.name.zh}, ${s.name.en ?? null},
+          (${s.id}, 'mrt', ${s.name.zh}, ${s.name.en ?? null},
            ${s.lat ?? null}, ${s.lng ?? null},
            ${s.center.x}, ${s.center.y},
            ${s.name.pos.x}, ${s.name.pos.y}, ${s.name.pos.anchor},

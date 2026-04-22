@@ -1,13 +1,10 @@
-'use client'
-
-import { ConfigProvider } from 'antd'
 import type { ReactNode } from 'react'
-import { brandTheme } from '@/lib/theme'
+import ThemeProvider from '@/components/ThemeProvider'
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <ConfigProvider theme={brandTheme}>
+    <ThemeProvider defaultMode="mrt">
       <div className="brand-public">{children}</div>
-    </ConfigProvider>
+    </ThemeProvider>
   )
 }
