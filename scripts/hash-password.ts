@@ -9,7 +9,8 @@ async function main() {
     process.exit(1)
   }
   const h = await hash(pw)
-  console.log(h)
+  // 直接貼進 .env.local 的格式：$ 需要用 \$ 跳脫，否則 Next.js env loader 會展開
+  console.log(`ADMIN_PASSWORD_HASH=${h.replace(/\$/g, '\\$')}`)
 }
 
 main().catch((e) => {
