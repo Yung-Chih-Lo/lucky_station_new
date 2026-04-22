@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Empty } from 'antd'
 import { EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
@@ -14,6 +15,21 @@ type Props = {
 }
 
 export default function ResultDisplay({ station, lines, token, commentCount = 0 }: Props) {
+  const [relayExcerpt, setRelayExcerpt] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!station) return
+    setRelayExcerpt(null)
+    fetch(`/api/stations/${station.id}/latest-comment`)
+      .then((res) => {
+        if (res.status === 200) return res.json()
+        return null
+      })
+      .then((data) => {
+        if (data?.excerpt) setRelayExcerpt(data.excerpt)
+      })
+      .catch(() => {})
+  }, [station?.id])
   if (!station) {
     return (
       <div style={containerStyle}>
@@ -35,6 +51,13 @@ export default function ResultDisplay({ station, lines, token, commentCount = 0 
         {station.nameZh}
       </h2>
       {station.nameEn && <p style={stationEnStyle}>{station.nameEn}</p>}
+
+      {relayExcerpt && (
+        <div style={relayBlockStyle}>
+          <span style={relayLabelStyle}>前旅人說</span>
+          <p style={relayTextStyle}>「{relayExcerpt}」</p>
+        </div>
+      )}
 
       <div style={chipsRowStyle}>
         {station.lineCodes.map((code) => {
@@ -166,6 +189,29 @@ const linkPillStyle: React.CSSProperties = {
   fontWeight: 500,
   transition: 'background-color 200ms ease, color 200ms ease',
   cursor: 'pointer',
+}
+
+const relayBlockStyle: React.CSSProperties = {
+  marginTop: 16,
+  padding: '10px 16px',
+  borderLeft: '2px solid var(--accent)',
+  textAlign: 'left',
+  width: '100%',
+}
+
+const relayLabelStyle: React.CSSProperties = {
+  fontSize: 10,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-muted)',
+}
+
+const relayTextStyle: React.CSSProperties = {
+  margin: '4px 0 0',
+  fontSize: 13,
+  color: 'var(--ink)',
+  fontStyle: 'italic',
+  lineHeight: 1.6,
 }
 
 const deepLinkStyle: React.CSSProperties = {

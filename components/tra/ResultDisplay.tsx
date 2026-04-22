@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Button } from 'antd'
 import {
   EnvironmentOutlined,
@@ -23,6 +24,21 @@ type Props = {
 }
 
 export default function TraResultDisplay({ station, token, commentCount = 0 }: Props) {
+  const [relayExcerpt, setRelayExcerpt] = useState<string | null>(null)
+
+  useEffect(() => {
+    setRelayExcerpt(null)
+    fetch(`/api/stations/${station.id}/latest-comment`)
+      .then((res) => {
+        if (res.status === 200) return res.json()
+        return null
+      })
+      .then((data) => {
+        if (data?.excerpt) setRelayExcerpt(data.excerpt)
+      })
+      .catch(() => {})
+  }, [station.id])
+
   const wikiLink = `https://zh.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(
     station.nameZh + '車站',
   )}`
@@ -40,6 +56,13 @@ export default function TraResultDisplay({ station, token, commentCount = 0 }: P
       </h2>
       {station.county && (
         <p style={countyStyle}>{station.county}</p>
+      )}
+
+      {relayExcerpt && (
+        <div style={relayBlockStyle}>
+          <span style={relayLabelStyle}>前旅人說</span>
+          <p style={relayTextStyle}>「{relayExcerpt}」</p>
+        </div>
       )}
 
       <div style={linksRowStyle}>
@@ -140,6 +163,29 @@ const linkPillStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 500,
   cursor: 'pointer',
+}
+
+const relayBlockStyle: React.CSSProperties = {
+  marginTop: 16,
+  padding: '10px 16px',
+  borderLeft: '2px solid var(--accent)',
+  textAlign: 'left',
+  width: '100%',
+}
+
+const relayLabelStyle: React.CSSProperties = {
+  fontSize: 10,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-muted)',
+}
+
+const relayTextStyle: React.CSSProperties = {
+  margin: '4px 0 0',
+  fontSize: 13,
+  color: 'var(--ink)',
+  fontStyle: 'italic',
+  lineHeight: 1.6,
 }
 
 const deepLinkStyle: React.CSSProperties = {
