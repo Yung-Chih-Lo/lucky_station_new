@@ -81,7 +81,7 @@ The system SHALL expose brand tokens (colors, fonts, radii) for both the MRT and
 - **THEN** they SHALL NOT contain brand color hex literals (e.g. `#1E1B4B`, `#D4A574`, `#1890ff`, `#F97316`)
 - **AND** they MAY reference DB-driven line colors (from `lines.color`) directly, since those are data, not brand tokens
 
-### Requirement: Color system — MRT dark indigo, TRA light glassmorphism
+### Requirement: Color system — dark indigo base with gold CTA
 The MRT mode SHALL use a dark-indigo background (`#1E1B4B`) with `Noto Sans TC` / `Noto Serif TC` text, glassmorphism surfaces for cards, and a muted gold (`#D4A574`) reserved for the primary CTA and the selected/active accent. The TRA mode SHALL use a light gradient background with stronger glassmorphism surfaces and a warm orange CTA. The 6 Taipei MRT line colors (from the DB) SHALL continue to drive station / connection / line-chip colors in MRT mode and SHALL NOT be overridden.
 
 #### Scenario: MRT primary CTA color
@@ -104,7 +104,7 @@ The MRT mode SHALL use a dark-indigo background (`#1E1B4B`) with `Noto Sans TC` 
 - **THEN** the chip fill SHALL be `#0070bd`
 - **AND** no brand token SHALL override this value
 
-### Requirement: Brand scope is limited to public routes, with theme selected by route and tab
+### Requirement: Brand scope is limited to public routes
 The visual-identity tokens, theme provider, and CSS overrides SHALL apply only to the public marketing/picker routes (`/`, `/explore`, `/stats`, `/comment`). The admin subtree (`/admin/**` and `/login` if present) SHALL continue to render with the unmodified antd default theme. Within the public surface, the active theme (MRT or TRA) SHALL be determined as follows: `/` honors the user-selected tab; `/explore`, `/stats`, and `/comment` are pinned to the MRT theme.
 
 #### Scenario: Admin page untouched
