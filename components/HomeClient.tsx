@@ -1,20 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { Modal, Typography } from 'antd'
+import { Modal } from 'antd'
 import SchematicMap from './SchematicMap'
 import Sidebar from './Sidebar'
 import ResultDisplay from './ResultDisplay'
 import { filterByLines, pickRandomStation } from '@/lib/randomStation'
+import { brand } from '@/lib/theme'
 import type { CanvasView, ConnectionView, LineView, StationView } from './types'
 
-const { Title } = Typography
-
 const MODAL_TITLES = [
-  '下一班列車開往...',
-  '捷運隨機 GO！',
-  '今天的幸運捷運站？',
-  '探索城市節點...',
+  '下一班列車開往…',
+  '命運決定了…',
+  '今天的籤',
+  '捷運替你選的是',
 ]
 
 const INTERMEDIATE_HOPS = 12
@@ -44,6 +43,16 @@ export default function HomeClient({ stations, connections, lines, canvas }: Pro
     const finalStation = pickRandomStation(stations, selectedLineCodes)
     if (!finalStation) return
 
+    setResult(finalStation)
+    setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReduced) {
+      setAnimationStations([])
+      setModalOpen(true)
+      return
+    }
+
     const pool = filterByLines(stations, selectedLineCodes)
     const intermediates = Array.from(
       { length: INTERMEDIATE_HOPS },
@@ -51,8 +60,6 @@ export default function HomeClient({ stations, connections, lines, canvas }: Pro
     )
 
     setAnimationStations([...intermediates, finalStation])
-    setResult(finalStation)
-    setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
     setIsAnimating(true)
   }
 
@@ -62,15 +69,8 @@ export default function HomeClient({ stations, connections, lines, canvas }: Pro
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-      }}
-    >
-      <div style={sidebarAreaStyle}>
+    <div style={pageStyle}>
+      <aside style={sidebarAreaStyle}>
         <Sidebar
           lines={lines}
           selectedLineCodes={selectedLineCodes}
@@ -78,15 +78,10 @@ export default function HomeClient({ stations, connections, lines, canvas }: Pro
           onRandomPick={handleRandomPick}
           isAnimating={isAnimating}
         />
-      </div>
+      </aside>
 
       <main style={mainAreaStyle}>
-        <Title
-          level={3}
-          style={{ marginBottom: 16, color: '#595959', textAlign: 'center' }}
-        >
-          台北捷運路網圖
-        </Title>
+        <h2 style={mapTitleStyle}>台北捷運路網圖</h2>
         <div style={mapContainerStyle}>
           <SchematicMap
             stations={stations}
@@ -103,14 +98,22 @@ export default function HomeClient({ stations, connections, lines, canvas }: Pro
 
       <Modal
         title={
-          <Title level={4} style={{ textAlign: 'center', margin: 0 }}>
-            {MODAL_TITLES[titleIndex]}
-          </Title>
+          <span style={modalTitleStyle}>{MODAL_TITLES[titleIndex]}</span>
         }
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
         centered
+        styles={{
+          content: {
+            background: 'var(--brand-surface-strong)',
+            border: '1px solid var(--brand-accent-gold)',
+            backdropFilter: 'blur(24px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+          },
+          header: { background: 'transparent', borderBottom: 'none' },
+          mask: { background: brand.maskBg, backdropFilter: 'blur(6px)' },
+        }}
       >
         {modalOpen && <ResultDisplay station={result} lines={lines} />}
       </Modal>
@@ -118,34 +121,62 @@ export default function HomeClient({ stations, connections, lines, canvas }: Pro
   )
 }
 
+const pageStyle: React.CSSProperties = {
+  display: 'flex',
+  minHeight: '100vh',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+}
+
 const sidebarAreaStyle: React.CSSProperties = {
-  backgroundColor: '#fff',
-  boxShadow: '2px 0 6px rgba(0, 21, 41, 0.08)',
   flexShrink: 0,
+  width: 320,
+  padding: 20,
   display: 'flex',
   flexDirection: 'column',
-  width: 280,
 }
 
 const mainAreaStyle: React.CSSProperties = {
   flexGrow: 1,
-  padding: 24,
-  backgroundColor: '#f0f2f5',
+  padding: '20px 24px 24px',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  minWidth: 0,
+}
+
+const mapTitleStyle: React.CSSProperties = {
+  margin: '0 0 14px',
+  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
+  fontWeight: 500,
+  fontSize: 13,
+  letterSpacing: '0.28em',
+  textTransform: 'uppercase',
+  color: 'var(--brand-text-muted)',
 }
 
 const mapContainerStyle: React.CSSProperties = {
   width: '100%',
   flex: 1,
-  minHeight: 400,
-  maxHeight: '80vh',
-  borderRadius: 8,
+  minHeight: 420,
+  maxHeight: '82vh',
+  borderRadius: 'var(--brand-radius-lg)',
   overflow: 'hidden',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
-  backgroundColor: 'white',
+  background:
+    'radial-gradient(800px 600px at 50% 40%, rgba(255,255,255,0.04), transparent 70%), var(--brand-surface)',
+  border: '1px solid var(--brand-border)',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
+}
+
+const modalTitleStyle: React.CSSProperties = {
+  display: 'block',
+  textAlign: 'center',
+  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
+  fontSize: 12,
+  fontWeight: 500,
+  letterSpacing: '0.28em',
+  textTransform: 'uppercase',
+  color: 'var(--brand-text-muted)',
 }

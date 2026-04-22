@@ -345,12 +345,17 @@ export default function SchematicMap({
               textAnchor={s.labelAnchor}
               fontSize={14}
               fontWeight={500}
-              fill="#333"
+              fill={adminMode ? '#333' : 'var(--brand-text)'}
               opacity={opacity}
               style={{
                 userSelect: 'none',
                 cursor: adminMode ? 'grab' : undefined,
                 pointerEvents: adminMode ? 'all' : 'none',
+                fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
+                paintOrder: adminMode ? undefined : 'stroke',
+                stroke: adminMode ? undefined : 'var(--brand-bg)',
+                strokeWidth: adminMode ? undefined : 3,
+                strokeLinejoin: adminMode ? undefined : 'round',
               }}
               onPointerDown={adminMode ? (e) => handleLabelPointerDown(e, s.id) : undefined}
             >
@@ -423,25 +428,24 @@ function TrainMarker({ animationStations, isAnimating, onAnimationEnd }: TrainMa
 
   return (
     <g transform={`translate(${s.schematicX}, ${s.schematicY})`} pointerEvents="none">
+      <circle
+        r={11}
+        fill="var(--brand-accent-gold)"
+        stroke="var(--brand-bg)"
+        strokeWidth={2}
+        style={{ filter: 'drop-shadow(0 1px 4px rgba(212,165,116,0.55))' }}
+      />
       <text
         x={0}
-        y={6}
-        textAnchor="middle"
-        fontSize={26}
-        style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
-      >
-        {'🚇'}
-      </text>
-      <text
-        x={0}
-        y={-22}
+        y={-20}
         textAnchor="middle"
         fontSize={13}
-        fontWeight={600}
-        fill="#1890ff"
+        fontWeight={700}
+        fill="var(--brand-accent-gold)"
         style={{
+          fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
           paintOrder: 'stroke',
-          stroke: 'white',
+          stroke: 'var(--brand-bg)',
           strokeWidth: 3,
           strokeLinejoin: 'round',
         }}

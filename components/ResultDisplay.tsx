@@ -1,10 +1,8 @@
 'use client'
 
-import { Empty, Typography } from 'antd'
-import { CarOutlined, EnvironmentOutlined, GlobalOutlined } from '@ant-design/icons'
+import { Empty } from 'antd'
+import { EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
 import type { LineView, StationView } from './types'
-
-const { Title } = Typography
 
 type Props = {
   station: StationView | null
@@ -20,8 +18,7 @@ export default function ResultDisplay({ station, lines }: Props) {
     )
   }
 
-  const lineName = (code: string) => lines.find((l) => l.code === code)?.nameZh ?? code
-  const lineSubtitle = station.lineCodes.map(lineName).join(' / ')
+  const lineOf = (code: string) => lines.find((l) => l.code === code)
   const wikiLink = `https://zh.wikipedia.org/wiki/${encodeURIComponent(station.nameZh)}站_(台北捷運)`
   const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     station.nameZh,
@@ -29,20 +26,37 @@ export default function ResultDisplay({ station, lines }: Props) {
 
   return (
     <div style={containerStyle}>
-      <div style={{ marginBottom: 16 }}>
-        <Title level={2} style={{ marginBottom: 4, color: '#1890ff' }}>
-          <CarOutlined style={{ marginRight: 8 }} />「{station.nameZh}」站
-        </Title>
-        {lineSubtitle && (
-          <p style={{ color: 'rgba(0,0,0,0.45)', margin: 0 }}>{lineSubtitle}</p>
-        )}
+      <p style={eyebrowStyle}>今日的籤是</p>
+      <h2 className="brand-reveal" style={stationNameStyle}>
+        {station.nameZh}
+      </h2>
+      {station.nameEn && <p style={stationEnStyle}>{station.nameEn}</p>}
+
+      <div style={chipsRowStyle}>
+        {station.lineCodes.map((code) => {
+          const line = lineOf(code)
+          return (
+            <span
+              key={code}
+              style={{
+                ...chipStyle,
+                backgroundColor: line?.color ?? 'var(--brand-surface-strong)',
+              }}
+            >
+              {line?.nameZh ?? code}
+            </span>
+          )
+        })}
       </div>
-      <div style={linksContainerStyle}>
-        <a href={wikiLink} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          <GlobalOutlined style={{ marginRight: 6 }} /> 維基百科
+
+      <div style={linksRowStyle}>
+        <a href={wikiLink} target="_blank" rel="noopener noreferrer" style={linkPillStyle}>
+          <ExportOutlined />
+          <span>維基百科</span>
         </a>
-        <a href={mapLink} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-          <EnvironmentOutlined style={{ marginRight: 6 }} /> Google Map
+        <a href={mapLink} target="_blank" rel="noopener noreferrer" style={linkPillStyle}>
+          <EnvironmentOutlined />
+          <span>Google Maps</span>
         </a>
       </div>
     </div>
@@ -51,33 +65,80 @@ export default function ResultDisplay({ station, lines }: Props) {
 
 const containerStyle: React.CSSProperties = {
   textAlign: 'center',
-  padding: '30px 20px',
-  backgroundColor: '#f0f2f5',
-  borderRadius: 8,
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  maxWidth: 400,
-  margin: '0 auto',
-  border: '1px solid #d9d9d9',
-  minHeight: 180,
+  padding: '24px 16px 8px',
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'center',
   alignItems: 'center',
+  minHeight: 200,
+  color: 'var(--brand-text)',
 }
 
-const linksContainerStyle: React.CSSProperties = {
+const eyebrowStyle: React.CSSProperties = {
+  margin: 0,
+  color: 'var(--brand-text-muted)',
+  fontSize: 12,
+  letterSpacing: '0.24em',
+  textTransform: 'uppercase',
+}
+
+const stationNameStyle: React.CSSProperties = {
+  margin: '10px 0 4px',
+  fontFamily: 'var(--font-serif), "Noto Serif TC", Georgia, serif',
+  fontWeight: 700,
+  fontSize: 56,
+  lineHeight: 1.1,
+  letterSpacing: '0.04em',
+  color: 'var(--brand-text)',
+}
+
+const stationEnStyle: React.CSSProperties = {
+  margin: 0,
+  color: 'var(--brand-text-muted)',
+  fontSize: 13,
+  letterSpacing: '0.08em',
+}
+
+const chipsRowStyle: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  gap: 6,
+  marginTop: 14,
+}
+
+const chipStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '3px 10px',
+  borderRadius: 999,
+  color: '#fff',
+  fontSize: 12,
+  fontWeight: 500,
+  letterSpacing: '0.04em',
+}
+
+const linksRowStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
-  gap: 20,
-  marginTop: 20,
-  paddingTop: 20,
-  borderTop: '1px dashed #d9d9d9',
+  gap: 10,
+  marginTop: 22,
+  paddingTop: 18,
+  borderTop: '1px solid var(--brand-border)',
   width: '100%',
+  flexWrap: 'wrap',
 }
 
-const linkStyle: React.CSSProperties = {
-  display: 'flex',
+const linkPillStyle: React.CSSProperties = {
+  display: 'inline-flex',
   alignItems: 'center',
-  color: '#1890ff',
+  gap: 6,
+  padding: '8px 16px',
+  borderRadius: 999,
+  border: '1px solid var(--brand-accent-gold)',
+  color: 'var(--brand-accent-gold)',
   textDecoration: 'none',
+  fontSize: 13,
+  fontWeight: 500,
+  transition: 'background-color 200ms ease, color 200ms ease',
+  cursor: 'pointer',
 }
