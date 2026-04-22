@@ -180,6 +180,7 @@ html, body {
 
 .tra-map-region.is-selected {
   fill: var(--accent);
+  stroke: rgba(255, 255, 255, 0.5);
   opacity: 1;
 }
 
