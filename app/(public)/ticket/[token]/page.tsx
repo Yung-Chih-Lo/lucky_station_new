@@ -49,7 +49,7 @@ export default function TicketPage({ params }: { params: { token: string } }) {
     <div style={pageStyle}>
       <article style={ticketStyle} aria-label="坐火行 籤紙">
         <header style={headerStyle}>
-          <span style={captionStyle}>坐火行 · 坐到哪算哪</span>
+          <span style={captionStyle}>坐火行 · 做到哪就去哪</span>
           <span style={captionStyle}>No.{ticketNo}</span>
         </header>
 
@@ -67,7 +67,7 @@ export default function TicketPage({ params }: { params: { token: string } }) {
         </div>
 
         <footer style={footerStyle}>
-          <span>命中注站 · 坐到哪算哪</span>
+          <span>命中注定 · 做到哪就去哪</span>
           <span style={{ opacity: 0.5 }}>ZUOHUO XING · THIS STATION CHOSE YOU</span>
         </footer>
       </article>

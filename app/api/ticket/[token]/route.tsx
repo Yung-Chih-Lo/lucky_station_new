@@ -251,7 +251,7 @@ export async function GET(
             textTransform: 'uppercase',
           }}
         >
-          <span style={{ display: 'flex' }}>命中注站 · 坐到哪算哪</span>
+          <span style={{ display: 'flex' }}>命中注定 · 做到哪就去哪</span>
           <span style={{ display: 'flex' }}>ZUOHUO XING</span>
         </div>
       </div>
