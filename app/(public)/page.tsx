@@ -5,6 +5,10 @@ import {
   getConnections,
   getLinesMap,
 } from '@/db/queries'
+import { getTraCounties } from '@/lib/data/tra'
+import { getDb } from '@/db/client'
+import { stations as stationsTable } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import type {
   CanvasView,
   ConnectionView,
@@ -14,11 +18,32 @@ import type {
 
 export const dynamic = 'force-dynamic'
 
+function getTraCountyToStations(): Record<string, string[]> {
+  const db = getDb()
+  const rows = db
+    .select({
+      nameZh: stationsTable.nameZh,
+      county: stationsTable.county,
+    })
+    .from(stationsTable)
+    .where(eq(stationsTable.transportType, 'tra'))
+    .all()
+  const out: Record<string, string[]> = {}
+  for (const r of rows) {
+    if (!r.county) continue
+    if (!out[r.county]) out[r.county] = []
+    out[r.county].push(r.nameZh)
+  }
+  return out
+}
+
 export default function HomePage() {
   const stationsRaw = getAllStationsWithLines()
   const connectionsRaw = getConnections()
   const linesRaw = Array.from(getLinesMap().values())
   const canvas: CanvasView = getCanvasConfig()
+  const traCounties = getTraCounties()
+  const traCountyToStations = getTraCountyToStations()
 
   const stations: StationView[] = stationsRaw.map((s) => ({
     id: s.id,
@@ -49,7 +74,7 @@ export default function HomePage() {
 
   if (stations.length === 0) {
     return (
-      <main style={{ padding: 24, color: 'var(--brand-text)' }}>
+      <main style={{ padding: 24, color: 'var(--ink)' }}>
         <h1>捷運籤</h1>
         <p>Database is empty. Run <code>npm run migrate &amp;&amp; npm run seed</code>.</p>
       </main>
@@ -58,10 +83,8 @@ export default function HomePage() {
 
   return (
     <HomeClient
-      stations={stations}
-      connections={connections}
-      lines={lines}
-      canvas={canvas}
+      mrt={{ stations, connections, lines, canvas }}
+      tra={{ counties: traCounties, countyToStations: traCountyToStations }}
     />
   )
 }

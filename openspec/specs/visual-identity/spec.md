@@ -1,123 +1,162 @@
 # visual-identity Specification
 
 ## Purpose
-TBD - created by archiving change rebrand-visual-identity. Update Purpose after archive.
+Defines the shared visual language of the public-facing picker and community
+pages. Anchors on one paper-based palette, one typography pair, and the
+"Urban Omikuji Press" signature elements so that MRT and TRA modes read as a
+single product whose only per-mode difference is an accent hue.
 ## Requirements
 ### Requirement: Public-facing brand name and slogan
-The public site SHALL present the brand as **「捷運籤」** with slogan **「搖一搖，捷運替你決定今天」**. The `<title>` metadata, visible page header, and sidebar heading SHALL all use this name. The prior string "Lucky Station" and the ad-hoc heading "隨機捷運 GO！" with emoji 🚇 SHALL NOT appear on any public page.
+The public site SHALL present the brand as **「下一站 · 幸運車站」** with slogan **「搖一搖，讓城市替你決定今天」**. The `<title>` metadata, the top-bar wordmark, and any marketing copy SHALL use this name. The prior strings "Lucky Station", "隨機捷運 GO！", and the emoji 🚇 SHALL NOT appear on any public page. The string "捷運籤" MAY appear only as a historical callout; it SHALL NOT be the primary brand label.
 
 #### Scenario: Home page title metadata
 - **WHEN** a user loads `/`
-- **THEN** the document `<title>` SHALL be "捷運籤" (optionally with the slogan appended after a separator)
-- **AND** the page SHALL NOT contain the literal strings "Lucky Station" or "隨機捷運 GO！"
+- **THEN** the document `<title>` SHALL contain "下一站" or "幸運車站"
+- **AND** the page SHALL NOT contain the literal strings "Lucky Station", "隨機捷運 GO！", or the 🚇 emoji
 
-#### Scenario: Sidebar heading
-- **WHEN** the public sidebar renders
-- **THEN** its primary heading SHALL read "捷運籤"
-- **AND** its sub-line SHALL read the slogan "搖一搖，捷運替你決定今天" (or a variant that contains the verb 「搖」 and the phrase 「決定今天」)
-- **AND** the heading area SHALL NOT contain any emoji character
+#### Scenario: Top-bar wordmark
+- **WHEN** the top bar renders on any `(public)` route
+- **THEN** its wordmark SHALL read "下一站" (primary) with "幸運車站" as secondary caption (or a visually equivalent stacked lockup)
+- **AND** the wordmark area SHALL NOT contain any emoji character
 
 ### Requirement: Single source of truth for brand tokens
-The system SHALL expose brand tokens (colors, fonts, radii) from one TypeScript module that feeds both the antd `ConfigProvider` theme and CSS custom properties on `<html>`. Hex literals for brand colors SHALL NOT appear inline in component files; components SHALL reference tokens via the antd theme, CSS variables, or re-exported constants.
+The system SHALL expose brand tokens (colors, fonts, radii) for both the MRT and TRA themes from one TypeScript module that feeds both the antd `ConfigProvider` themes and CSS custom properties on `<html>`. Hex literals for brand colors SHALL NOT appear inline in component files; components SHALL reference tokens via the antd theme, CSS variables, or re-exported constants. The module SHALL export named theme objects (e.g. `mrtTheme`, `traTheme`), not a single anonymous default.
 
 #### Scenario: Palette change propagates everywhere
-- **WHEN** the `--brand-accent-gold` token value is changed in the single source module
-- **THEN** both the antd CTA button and any custom gold border/ring on a non-antd element SHALL reflect the new value after reload
+- **WHEN** a brand token value is changed in the single source module
+- **THEN** both the antd CTA button and any custom border/ring on a non-antd element SHALL reflect the new value after reload
 - **AND** no component file SHALL require a separate edit
 
+#### Scenario: Both themes change in lockstep when tokens are renamed
+- **WHEN** the brand tokens module renames a token
+- **THEN** both the MRT theme and the TRA theme exports SHALL reference the new name
+- **AND** components SHALL continue to work after a single coordinated edit
+
 #### Scenario: No hex leaks in components
-- **WHEN** the public component files (`HomeClient`, `Sidebar`, `ResultDisplay`, `SchematicMap`'s styling layer) are scanned
-- **THEN** they SHALL NOT contain brand color hex literals (e.g. `#1E1B4B`, `#D4A574`, `#1890ff`)
+- **WHEN** the public component files are scanned
+- **THEN** they SHALL NOT contain brand color hex literals
 - **AND** they MAY reference DB-driven line colors (from `lines.color`) directly, since those are data, not brand tokens
 
-### Requirement: Color system — dark indigo base with gold CTA
-The public surface SHALL use a dark-indigo background (`#1E1B4B`) with `Noto Sans TC` / `Noto Serif TC` text, glassmorphism surfaces for cards, and a muted gold (`#D4A574`) reserved for the primary CTA and the selected/active accent. The 6 Taipei MRT line colors (from the DB) SHALL continue to drive station / connection / line-chip colors and SHALL NOT be overridden.
+### Requirement: Color system — paper base with accent-hue mode swap
+Both MRT and TRA modes SHALL share ONE palette. Mode identity SHALL differ only by a single accent hue; every other token (background, surface, surface-elevated, ink, ink-muted, rule, seal, success, warn) SHALL be identical across modes. The shared base is a warm paper background (`#F3ECDC`) with opaque paper surfaces (`#FFFBF0`) and ink text (`#1A1D2B`). MRT mode SHALL use 朱砂紅 `#E8421C` as the accent. TRA mode SHALL use 鐵道深藍 `#15365C` as the accent. A seal gold `#C8954A` SHALL be reserved for the stamp mark on a successful pick. The 6 Taipei MRT line colors (from the DB) SHALL continue to drive station / connection / line-chip colors in MRT mode and SHALL NOT be overridden.
 
-#### Scenario: Primary CTA color
-- **WHEN** the "搖籤筒" (random-pick) button renders in its default enabled state
-- **THEN** its background or border SHALL resolve to `--brand-accent-gold`
+#### Scenario: MRT primary CTA color
+- **WHEN** the "抽．下．一．站" button renders in MRT mode in its default enabled state
+- **THEN** its background SHALL resolve to the MRT `--accent` token (`#E8421C`)
+- **AND** its text contrast ratio against that background SHALL be at least 4.5:1 for text ≥14px bold
+
+#### Scenario: TRA primary CTA color
+- **WHEN** the primary CTA button renders in TRA mode in its default enabled state
+- **THEN** its background SHALL resolve to the TRA `--accent` token (`#15365C`)
 - **AND** its text contrast ratio against that background SHALL be at least 4.5:1
 
-#### Scenario: Body text contrast
-- **WHEN** any body-text element renders on `--brand-bg`
+#### Scenario: Body text contrast on paper background
+- **WHEN** any body-text element renders on `--paper-bg` in either mode
 - **THEN** the resolved text color SHALL produce a contrast ratio of at least 4.5:1 against the background
-- **AND** the resolved text color SHALL be `--brand-text` for primary text or `--brand-text-muted` for secondary labels
+- **AND** primary body text SHALL resolve to `--ink`; secondary labels SHALL resolve to `--ink-muted`
 
-#### Scenario: Line chips keep DB colors
-- **WHEN** a line chip (sidebar checkbox dot, or a chip in the result modal) renders for a line whose `lines.color` is `#0070bd`
+#### Scenario: Mode switch only changes accent
+- **WHEN** a user switches between MRT and TRA tabs
+- **THEN** only the `--accent` (and its derived `--accent-soft` hover/selected tint) SHALL change
+- **AND** every other token (`--paper-bg`, `--paper-surface`, `--ink`, `--ink-muted`, `--rule`, `--seal`, `--success`, `--warn`) SHALL be identical across both modes
+
+#### Scenario: Seal token appears only on the stamp mark
+- **WHEN** the public surface is scanned for use of `--seal`
+- **THEN** `--seal` SHALL only be consumed by the stamp-mark component on a successful pick card
+- **AND** `--seal` SHALL NOT appear as a CTA, border, or body text color
+
+#### Scenario: Line chips keep DB colors in MRT mode
+- **WHEN** an MRT line chip renders for a line whose `lines.color` is `#0070bd`
 - **THEN** the chip fill SHALL be `#0070bd`
 - **AND** no brand token SHALL override this value
 
 ### Requirement: Typography system — Noto Serif TC for ritual moments, Noto Sans TC for UI
-The public site SHALL load Noto Serif TC (weights 500, 700) and Noto Sans TC (weights 400, 500, 700) via `next/font/google`, exposing them as CSS variables. Noto Serif TC SHALL be used for ritual-moment text: the result-reveal station name and the brand wordmark (「捷運籤」). All other UI text — buttons, helper labels, line-filter checkbox labels, page-section headings, and station labels on the schematic map — SHALL use Noto Sans TC.
+The public site SHALL load Noto Serif TC (weights 500, 900) and Noto Sans TC (weights 400, 500, 700) via `next/font/google`, exposing them as CSS variables `--font-serif` and `--font-sans`. Noto Serif TC at weight 900 SHALL be used for ritual-moment text: the brand wordmark, the station-name lockup, and the display-size page titles. Noto Sans TC SHALL be used for all other UI text — buttons, helper labels, line/county checkbox labels, body copy, and map station labels. JetBrains Mono SHALL be loaded only on pages that render the shareable ticket (for the 籤號 `No.XXXX` field).
 
-#### Scenario: Result modal station name uses serif
-- **WHEN** the result modal reveals a station
+#### Scenario: Station name lockup uses serif
+- **WHEN** the result modal reveals a station name
 - **THEN** the station's Chinese name element SHALL compute `font-family` to Noto Serif TC (or its CSS-variable reference)
-- **AND** the font weight SHALL be at least 700
+- **AND** the font weight SHALL be 900
 
-#### Scenario: Brand wordmark uses serif
-- **WHEN** the sidebar brand wordmark「捷運籤」renders
-- **THEN** its computed `font-family` SHALL be Noto Serif TC (or its CSS-variable reference)
+#### Scenario: Brand wordmark in top bar uses serif
+- **WHEN** the top-bar brand wordmark「下一站 · 幸運車站」renders
+- **THEN** its computed `font-family` SHALL be Noto Serif TC
 - **AND** the font weight SHALL be at least 700
 
 #### Scenario: Non-wordmark UI text uses sans
-- **WHEN** a button, helper label, line-filter checkbox label, page-section heading, or station label on the schematic map renders
+- **WHEN** a button label, helper text, checkbox label, page-section heading, or map station label renders
 - **THEN** the computed `font-family` SHALL be Noto Sans TC
-- **AND** this rule SHALL NOT apply to the brand wordmark or the result-reveal station name
+- **AND** this rule SHALL NOT apply to the brand wordmark or the station-name lockup
 
 #### Scenario: Fonts load via next/font
 - **WHEN** `app/layout.tsx` is inspected
-- **THEN** it SHALL import both fonts from `next/font/google`
+- **THEN** it SHALL import both fonts from `next/font/google` with `subsets: ['latin']` plus `preload: true` for weights actually used above the fold
 - **AND** it SHALL NOT rely on `@import url()` inside a CSS file or a `<link>` to `fonts.googleapis.com`
 
-### Requirement: Glassmorphism surface treatment for cards
-Public card-like surfaces (the sidebar container, the result modal inner panel) SHALL use a translucent white fill over the dark background with a blurred backdrop and a subtle border. A solid fallback SHALL render on browsers that lack `backdrop-filter` support.
-
-#### Scenario: Sidebar card appearance
-- **WHEN** the sidebar container renders on a `backdrop-filter`-supporting browser
-- **THEN** it SHALL have `background: var(--brand-surface)` (a low-opacity white), a `backdrop-filter` of at least `blur(12px)`, and a 1px `var(--brand-border)` outline
-
-#### Scenario: Fallback without backdrop-filter
-- **WHEN** the browser does not support `backdrop-filter`
-- **THEN** the sidebar container SHALL render with a solid `var(--brand-surface-strong)` fill
-- **AND** the sidebar SHALL remain readable (body text still ≥ 4.5:1 contrast)
-
 ### Requirement: Ritual reveal for the result modal
-The random-pick result modal SHALL reveal the station name with a soft fade-in plus a small upward translate, lasting no more than 400ms. The station name SHALL be the dominant visual element (serif, ≥ 40px). Wiki and Google Maps links SHALL render as pill-shaped buttons with inline SVG icons — no emoji characters SHALL appear.
+The random-pick result modal SHALL reveal the station name using the omikuji ritual defined in the `omikuji-reveal` capability. When `prefers-reduced-motion: reduce` is set, the modal SHALL skip the ritual and render the final reveal state immediately. The station name SHALL be the dominant visual element in the modal (serif, ≥40px). Wiki and Google Maps links SHALL render as pill-shaped buttons with inline SVG icons; no emoji characters SHALL appear.
 
-#### Scenario: Default reveal animation
-- **WHEN** the modal opens after an animation ends
-- **THEN** the station-name element SHALL animate `opacity` from 0 to 1 and `transform` from `translateY(8px)` to `translateY(0)` over ≤ 400ms
-- **AND** after the animation, the station name SHALL be visually dominant (largest text on screen)
+#### Scenario: Modal delegates to RevealRitual
+- **WHEN** the result modal opens
+- **THEN** it SHALL render the `<RevealRitual>` component and pass the station data
+- **AND** the station name SHALL end up as the visually dominant element (largest text on screen)
 
 #### Scenario: prefers-reduced-motion
 - **WHEN** the user's OS reports `prefers-reduced-motion: reduce`
-- **THEN** the reveal SHALL skip the fade/translate and render the final state immediately
-- **AND** the 2-second station-name cycling animation in the map SHALL collapse to a single-frame reveal
+- **THEN** the reveal SHALL skip the ritual animation and render the final state immediately
+- **AND** the 2-second station-name cycling animation (if any) SHALL collapse to a single-frame reveal
 
 #### Scenario: No emoji in links
 - **WHEN** the Wiki and Google Maps links render
 - **THEN** their icons SHALL be inline SVG (e.g. antd `@ant-design/icons`)
 - **AND** their rendered text + accessible name SHALL NOT contain any emoji character
 
-### Requirement: Brand scope is limited to public routes
-The visual-identity tokens, theme provider, and CSS overrides SHALL apply only to the public marketing/picker routes. The admin subtree (`/admin/**` and `/login` if present) SHALL continue to render with the unmodified antd default theme.
+### Requirement: Tab-driven mode switching on the home page
+The home page (`/`) SHALL switch the active mode based on the selected transport tab in the top bar. Mode switching SHALL update both the antd `ConfigProvider` and the `<html data-theme>` attribute so CSS variables and antd components stay synchronized. Tabs SHALL live in the top bar, not inside any page-level component.
 
-#### Scenario: Admin page untouched
-- **WHEN** a user navigates to `/admin`
-- **THEN** the rendered UI SHALL use antd's default light theme (default blue `#1890ff`, default font stack)
-- **AND** the `--brand-*` CSS variables MAY be present on `<html>` but SHALL NOT be consumed by any admin component
+#### Scenario: Initial render uses MRT mode
+- **WHEN** the home page is first rendered
+- **THEN** `<html>` SHALL have `data-theme="mrt"`
+- **AND** the antd `ConfigProvider` for the public surface SHALL receive the MRT accent config
 
-#### Scenario: Public page themed
-- **WHEN** a user navigates to `/`
-- **THEN** the rendered UI SHALL use the `visual-identity` token system (dark indigo bg, Noto Sans/Serif TC, gold CTA)
+#### Scenario: User switches to TRA tab
+- **WHEN** the user clicks the TRA tab in the top bar
+- **THEN** `<html>` SHALL update to `data-theme="tra"`
+- **AND** the antd `ConfigProvider` for the public surface SHALL re-render with the TRA accent config
+- **AND** all public CSS that reads `--accent` SHALL reflect the TRA accent value without page reload
+
+#### Scenario: Theme transition is smooth
+- **WHEN** the active mode switches between MRT and TRA
+- **THEN** `--accent`-driven properties (CTA backgrounds, active tab underline, selected county fill) SHALL transition over 150–300ms
+- **AND** `prefers-reduced-motion: reduce` users SHALL receive an instant switch with no transition
+
+### Requirement: Shared community pages are pinned to the MRT mode
+The `/explore`, `/stats`, and `/comment` pages SHALL render with the MRT accent regardless of which transport type the displayed content belongs to. These pages SHALL NOT switch mode based on per-row transport type or any user preference. The top bar on these pages SHALL still show both tabs; clicking a non-active tab SHALL navigate to `/` in that mode.
+
+#### Scenario: /explore uses MRT accent
+- **WHEN** a visitor loads `/explore`
+- **THEN** `<html>` SHALL have `data-theme="mrt"`
+- **AND** the rendered UI SHALL use the MRT `--accent` value
+
+#### Scenario: /stats uses MRT accent
+- **WHEN** a visitor loads `/stats`
+- **THEN** `<html>` SHALL have `data-theme="mrt"`
+- **AND** the leaderboard SHALL render with MRT accent even when the active scope is `tra`
+
+#### Scenario: /comment uses MRT accent regardless of token's transport_type
+- **WHEN** a visitor loads `/comment?token=<token>` for a token whose `station_picks.transport_type = 'tra'`
+- **THEN** `<html>` SHALL have `data-theme="mrt"`
+- **AND** the page SHALL NOT switch to the TRA accent
+
+#### Scenario: Tab click on community page navigates home
+- **WHEN** a visitor on `/explore`, `/stats`, or `/comment` clicks a tab in the top bar
+- **THEN** the app SHALL navigate to `/` with that tab active
 
 ### Requirement: Interactive elements have visible focus and pointer affordance
 All clickable or focusable elements on the public surface SHALL show a visible focus ring when reached via keyboard and SHALL present `cursor: pointer` on hover for mouse users. Focus rings SHALL be at least 2px wide and SHALL have contrast ≥ 3:1 against the adjacent surface.
 
 #### Scenario: Keyboard focus on CTA
-- **WHEN** the user tabs to the "搖籤筒" button
+- **WHEN** the user tabs to the primary CTA button
 - **THEN** a visible focus ring SHALL appear around the button
 - **AND** the ring SHALL be at least 2px wide with at least 3:1 contrast against the button background
 
@@ -125,3 +164,77 @@ All clickable or focusable elements on the public surface SHALL show a visible f
 - **WHEN** the user hovers any clickable element (CTA, checkbox, pill link, modal close)
 - **THEN** the cursor SHALL be `pointer`
 
+### Requirement: Persistent top bar on all public routes
+Every `(public)` route (`/`, `/explore`, `/stats`, `/comment`) SHALL render a persistent top bar provided by the public layout. The top bar SHALL contain three regions: (a) left — brand wordmark that links to `/`, (b) center — mode tabs (捷運 / 台鐵), (c) right — text links `旅人心得` and `排行榜`. The tabs and social nav SHALL NOT be duplicated inside any page-level component. The top bar SHALL be 64px tall on desktop and separated from the main content area by a 1px `--rule` hairline. No login control SHALL appear in the public top bar; admin authentication remains at `/admin/login` and is not reachable from public navigation.
+
+#### Scenario: Top bar is present on home
+- **WHEN** a visitor loads `/`
+- **THEN** the DOM SHALL contain exactly one `<TopBar>` (or equivalent) rendered by the `(public)` layout
+- **AND** tabs and social nav SHALL NOT be duplicated inside `HomeClient`, `TraPicker`, or `MrtPicker`
+
+#### Scenario: Top bar is present on community pages
+- **WHEN** a visitor loads `/explore`, `/stats`, or `/comment`
+- **THEN** the DOM SHALL contain exactly one `<TopBar>` with the same three regions
+- **AND** the right-side nav links SHALL link to `/explore`, `/stats`, and trigger the login flow respectively
+
+#### Scenario: Active tab uses underline, not filled pill
+- **WHEN** a tab is active
+- **THEN** its indicator SHALL be a 2px bottom border in `--accent`
+- **AND** it SHALL NOT be a filled-background pill
+
+### Requirement: Single-card picker layout with internal rail-tick divider
+The home picker SHALL render as ONE card (the "omikuji paper") containing two internal panes — left: line/county picker; right: map or schematic. The two panes SHALL be separated by a single 1px vertical `--rule` line, optionally decorated with rail-tick marks. The vestigial "台灣縣市" eyebrow heading SHALL be removed. Both panes SHALL share the same top padding so their top edges align. Inner content SHALL NOT be wrapped in a second card-on-card nest.
+
+#### Scenario: No double-card nesting
+- **WHEN** the home picker DOM is inspected
+- **THEN** there SHALL be exactly one outer card (the omikuji card)
+- **AND** neither the picker sidebar nor the map container SHALL apply a `.brand-glass` or other card-like background/border inside the outer card
+
+#### Scenario: Eyebrow "台灣縣市" is removed
+- **WHEN** the TRA picker renders
+- **THEN** the text "台灣縣市" (as a heading above the map) SHALL NOT appear
+- **AND** the map SHALL fill the right pane from the pane's top padding
+
+#### Scenario: Left and right panes share top edge
+- **WHEN** the picker card renders on viewports ≥960px
+- **THEN** the first visible element of the left pane and the first visible element of the right pane SHALL have the same `offsetTop` within the card (±4px tolerance)
+
+#### Scenario: Responsive stacking on narrow viewports
+- **WHEN** the viewport width is below 960px
+- **THEN** the two panes SHALL stack vertically (left pane on top)
+- **AND** the internal divider SHALL rotate to horizontal (a 1px `--rule` line above the right pane)
+
+### Requirement: Paper surface treatment replaces glassmorphism
+The public surface SHALL use opaque paper backgrounds, not glassmorphism. The `.brand-glass` class (translucent white fill + backdrop-filter blur) SHALL NOT be applied to any public card, modal, or sidebar. Cards SHALL use `background: var(--paper-surface)` with a 1px `--rule` border and a subtle two-color offset shadow (`2px 2px 0 --accent, -2px -2px 0 --ink` at low opacity) that evokes printing misregistration. A very subtle paper grain MAY be applied via a background image filter at ≤3% intensity.
+
+#### Scenario: No glassmorphism in picker card
+- **WHEN** the picker card renders on any `backdrop-filter`-supporting browser
+- **THEN** its background SHALL be opaque (`--paper-surface`)
+- **AND** no `backdrop-filter` property SHALL be applied
+
+#### Scenario: No glassmorphism in result modal
+- **WHEN** the result modal renders
+- **THEN** its content background SHALL be `--paper-surface-elevated` (opaque)
+- **AND** no `backdrop-filter` property SHALL be applied
+
+#### Scenario: Brand-glass class is not referenced in public components
+- **WHEN** the public component tree (`app/(public)/**`, `components/mrt/**`, `components/tra/**`, `components/omikuji/**`) is scanned
+- **THEN** no element SHALL carry the `className` `brand-glass`
+- **AND** the `.brand-glass` rule SHALL NOT exist in `globals.css`
+
+### Requirement: Signature visual elements
+The public surface SHALL express four signature elements: (1) a **rail-tick rule** — a horizontal/vertical 1px `--rule` line decorated with repeating short tick marks, used as a divider between top bar and content, between picker panes, and between result-card regions; (2) a **kerf edge** — a dashed top/bottom edge on the omikuji card evoking a torn ticket; (3) a **seal mark** — a circular `--seal` stamp (diameter 56–72px) applied to a result card on a successful pick, containing date and 籤號; (4) a **two-color offset shadow** — a dual-tone micro shadow on cards evoking risograph misregistration. These elements SHALL be implemented as reusable React components or CSS utility classes so consuming pages do not reimplement them.
+
+#### Scenario: Rail-tick rule available as a reusable primitive
+- **WHEN** a page needs a divider
+- **THEN** it SHALL use `<RailTickRule>` (or a shared class such as `.rail-tick-rule`)
+- **AND** no page SHALL hard-code the tick geometry inline
+
+#### Scenario: Seal mark only on successful pick
+- **WHEN** a pick result card renders
+- **THEN** a `<SealMark>` SHALL appear on the card in `--seal` color
+- **AND** the seal SHALL show the pick's date and an issued 籤號 (e.g. `No.0428`)
+
+#### Scenario: Kerf edge on omikuji card
+- **WHEN** the outer omikuji card renders on the home page
+- **THEN** its top and bottom edges SHALL show a dashed kerf (CSS `border-style: dashed` or SVG equivalent at 4px dash / 2px gap)

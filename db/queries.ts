@@ -35,25 +35,64 @@ export function getCanvasConfig(): CanvasConfig {
 
 export function getLinesMap(): Map<string, Line> {
   const db = getDb()
-  const rows = db.select().from(lines).all()
+  const rows = db.select().from(lines).where(eq(lines.transportType, 'mrt')).all()
   return new Map(rows.map((r) => [r.code, r]))
 }
 
-export function getAllStationsWithLines(): StationWithLines[] {
+export type MrtStationWithLines = {
+  id: number
+  nameZh: string
+  nameEn: string | null
+  lat: number | null
+  lng: number | null
+  schematicX: number
+  schematicY: number
+  labelX: number
+  labelY: number
+  labelAnchor: 'start' | 'middle' | 'end'
+  updatedAt: number
+  lineCodes: string[]
+}
+
+export function getAllStationsWithLines(): MrtStationWithLines[] {
   const db = getDb()
   const rows = db
     .select({ station: stations, lineCode: stationLines.lineCode })
     .from(stations)
     .leftJoin(stationLines, eq(stationLines.stationId, stations.id))
+    .where(eq(stations.transportType, 'mrt'))
     .all()
 
-  const map = new Map<number, StationWithLines>()
+  const map = new Map<number, MrtStationWithLines>()
   for (const { station, lineCode } of rows) {
+    if (
+      station.schematicX === null ||
+      station.schematicY === null ||
+      station.labelX === null ||
+      station.labelY === null ||
+      station.labelAnchor === null
+    ) {
+      // MRT rows must have schematic coords; skip malformed rows.
+      continue
+    }
     const existing = map.get(station.id)
     if (existing) {
       if (lineCode) existing.lineCodes.push(lineCode)
     } else {
-      map.set(station.id, { ...station, lineCodes: lineCode ? [lineCode] : [] })
+      map.set(station.id, {
+        id: station.id,
+        nameZh: station.nameZh,
+        nameEn: station.nameEn,
+        lat: station.lat,
+        lng: station.lng,
+        schematicX: station.schematicX,
+        schematicY: station.schematicY,
+        labelX: station.labelX,
+        labelY: station.labelY,
+        labelAnchor: station.labelAnchor,
+        updatedAt: station.updatedAt,
+        lineCodes: lineCode ? [lineCode] : [],
+      })
     }
   }
   return Array.from(map.values())

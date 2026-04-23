@@ -54,6 +54,7 @@ export async function POST(req: Request) {
       const inserted = tx
         .insert(stations)
         .values({
+          transportType: 'mrt',
           nameZh: v.nameZh,
           nameEn: v.nameEn ?? null,
           schematicX: v.schematicX,

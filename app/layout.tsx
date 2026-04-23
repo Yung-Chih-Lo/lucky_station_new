@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Noto_Sans_TC, Noto_Serif_TC } from 'next/font/google'
 import { AntdRegistry } from '@ant-design/nextjs-registry'
-import { brandCssVars } from '@/lib/theme'
 import './globals.css'
 
 const notoSans = Noto_Sans_TC({
@@ -13,24 +12,25 @@ const notoSans = Noto_Sans_TC({
 })
 
 const notoSerif = Noto_Serif_TC({
-  weight: ['500', '700'],
+  weight: ['500', '900'],
   subsets: ['latin'],
   variable: '--font-serif',
   display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: '捷運籤 | 搖一搖，捷運替你決定今天',
-  description: '選幾條線，搖一搖，讓捷運替你決定今天的目的地。台北捷運隨機籤站。',
+  title: '坐火行 | 一鍵抽站，說走就走',
+  description: '不知道今天去哪？選條路線，讓命運決定你的下一站。台北捷運與台鐵隨機抽站。',
   icons: { icon: '/train.png' },
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="zh-TW" className={`${notoSans.variable} ${notoSerif.variable}`}>
-      <head>
-        <style dangerouslySetInnerHTML={{ __html: brandCssVars() }} />
-      </head>
+    <html
+      lang="zh-TW"
+      data-theme="mrt"
+      className={`${notoSans.variable} ${notoSerif.variable}`}
+    >
       <body>
         <AntdRegistry>{children}</AntdRegistry>
       </body>

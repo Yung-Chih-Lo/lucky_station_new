@@ -23,13 +23,8 @@ export default function Sidebar({
   const pickDisabled = selectedLineCodes.length === 0 || isAnimating
 
   return (
-    <div className="brand-glass" style={containerStyle}>
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <h1 style={brandTitleStyle}>捷運籤</h1>
-        <p style={sloganStyle}>搖一搖，捷運替你決定今天</p>
-      </div>
-
-      <p style={sectionLabelStyle}>選擇想搭的路線</p>
+    <div style={containerStyle}>
+      <p style={sectionLabelStyle}>選擇你的出發路線</p>
 
       <div style={selectRowStyle}>
         <Button
@@ -67,7 +62,7 @@ export default function Sidebar({
                   borderRadius: '50%',
                   marginRight: 8,
                   verticalAlign: 'middle',
-                  boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.25)',
+                  boxShadow: '0 0 0 1px var(--rule-strong)',
                 }}
               />
               {line.nameZh ?? line.code}
@@ -78,6 +73,10 @@ export default function Sidebar({
 
       <Divider style={{ margin: '0 0 16px 0' }} />
 
+      <p style={summaryStyle}>
+        已選 <strong style={{ color: 'var(--ink)' }}>{selectedLineCodes.length}</strong> 條路線
+      </p>
+
       <Button
         type="primary"
         block
@@ -87,44 +86,27 @@ export default function Sidebar({
         loading={isAnimating}
         icon={<SwapOutlined />}
       >
-        {isAnimating ? '列車行駛中…' : '搖籤 · 抽一站'}
+        {isAnimating ? '列車行駛中…' : '命．中．注．站'}
       </Button>
     </div>
   )
 }
 
 const containerStyle: React.CSSProperties = {
-  padding: 20,
-  height: '100%',
   display: 'flex',
   flexDirection: 'column',
-}
-
-const brandTitleStyle: React.CSSProperties = {
-  margin: 0,
-  fontFamily: 'var(--font-serif), "Noto Serif TC", Georgia, serif',
-  fontWeight: 700,
-  fontSize: 32,
-  letterSpacing: '0.08em',
-  color: 'var(--brand-text)',
-}
-
-const sloganStyle: React.CSSProperties = {
-  marginTop: 6,
-  marginBottom: 0,
-  color: 'var(--brand-text-muted)',
-  fontSize: 13,
-  letterSpacing: '0.04em',
+  height: '100%',
 }
 
 const sectionLabelStyle: React.CSSProperties = {
-  textAlign: 'center',
-  fontWeight: 500,
-  marginBottom: 8,
-  color: 'var(--brand-text-muted)',
-  fontSize: 12,
-  letterSpacing: '0.16em',
-  textTransform: 'uppercase',
+  margin: 0,
+  textAlign: 'left',
+  fontFamily: 'var(--font-serif), "Noto Serif TC", ui-serif, serif',
+  fontWeight: 700,
+  marginBottom: 12,
+  color: 'var(--ink)',
+  fontSize: 18,
+  letterSpacing: '0.06em',
 }
 
 const selectRowStyle: React.CSSProperties = {
@@ -139,4 +121,13 @@ const listScrollStyle: React.CSSProperties = {
   overflowY: 'auto',
   paddingRight: 8,
   marginBottom: 16,
+  minHeight: 0,
+  maxHeight: 'clamp(220px, 45vh, 420px)',
+}
+
+const summaryStyle: React.CSSProperties = {
+  margin: '0 0 12px',
+  fontSize: 13,
+  letterSpacing: '0.08em',
+  color: 'var(--ink-muted)',
 }
