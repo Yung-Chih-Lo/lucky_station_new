@@ -9,7 +9,10 @@ const { Title } = Typography
 function LoginInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const from = searchParams?.get('from') || '/admin'
+  const rawFrom = searchParams?.get('from')
+  const isSafeFrom =
+    typeof rawFrom === 'string' && rawFrom.startsWith('/') && !rawFrom.startsWith('//')
+  const from = isSafeFrom ? rawFrom : '/admin'
 
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
