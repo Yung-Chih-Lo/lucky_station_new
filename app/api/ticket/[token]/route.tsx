@@ -4,11 +4,11 @@ import path from 'node:path'
 import QRCode from 'qrcode'
 import { NextResponse } from 'next/server'
 import { getSqlite } from '@/db/client'
-import { ticketNoFromToken } from '@/lib/ticketNumber'
 
 export const runtime = 'nodejs'
 
 type PickRow = {
+  id: number
   station_id: number
   transport_type: 'mrt' | 'tra'
   token: string
@@ -39,7 +39,7 @@ export async function GET(
   const sqlite = getSqlite()
   const pick = sqlite
     .prepare<[string], PickRow>(
-      `SELECT p.station_id, p.transport_type, p.token, p.picked_at,
+      `SELECT p.id, p.station_id, p.transport_type, p.token, p.picked_at,
               s.name_zh, s.name_en, s.county
        FROM station_picks p
        JOIN stations s ON s.id = p.station_id
@@ -67,7 +67,7 @@ export async function GET(
   })
   const qrDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(qrSvg)}`
 
-  const ticketNo = ticketNoFromToken(pick.token)
+  const ticketNo = String(pick.id).padStart(4, '0')
   const dateLabel = formatDate(pick.picked_at)
   const modeLabel = pick.transport_type === 'mrt' ? '捷運' : '台鐵'
 

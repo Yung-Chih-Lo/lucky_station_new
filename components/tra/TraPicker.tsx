@@ -6,7 +6,7 @@ import TaiwanSvgMap from './TaiwanSvgMap'
 import TraSidebar from './Sidebar'
 import TraResultDisplay from './ResultDisplay'
 import RevealRitual from '@/components/omikuji/RevealRitual'
-import { ticketNoFromToken, formatPickDate } from '@/lib/ticketNumber'
+import { formatPickDate } from '@/lib/ticketNumber'
 import { paperTokens } from '@/lib/theme'
 import { savePickToHistory } from '@/lib/pickHistory'
 
@@ -36,6 +36,7 @@ type Props = {
 
 type PickResult = {
   token: string
+  pick_no: number
   comment_count?: number
   station: {
     id: number
@@ -213,7 +214,7 @@ export default function TraPicker({ counties, countyToStations }: Props) {
             <RevealRitual
               stationName={result.station.nameZh}
               stationNameEn={result.station.nameEn}
-              ticketNo={ticketNoFromToken(result.token)}
+              ticketNo={String(result.pick_no).padStart(4, '0')}
               dateLabel={formatPickDate()}
               modeLabel="台鐵"
               waitFor={pickPromise}

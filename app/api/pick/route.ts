@@ -51,18 +51,20 @@ export async function POST(req: Request) {
   )
 
   let token: string | null = null
+  let pickNo: number | null = null
   for (let attempt = 0; attempt < TOKEN_RETRY_LIMIT; attempt++) {
     const candidate = generateToken()
     try {
-      insert.run(station.id, station.transportType, candidate, Date.now())
+      const info = insert.run(station.id, station.transportType, candidate, Date.now())
       token = candidate
+      pickNo = Number(info.lastInsertRowid)
       break
     } catch (err) {
       if (!isUniqueError(err)) throw err
     }
   }
 
-  if (!token) {
+  if (!token || pickNo === null) {
     return NextResponse.json({ error: 'token_collision' }, { status: 500 })
   }
 
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
     .get(station.id)
   const comment_count = countRow?.n ?? 0
 
-  return NextResponse.json({ token, station, comment_count })
+  return NextResponse.json({ token, station, comment_count, pick_no: pickNo })
 }
 
 function isUniqueError(err: unknown): boolean {

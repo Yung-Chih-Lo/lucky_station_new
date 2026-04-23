@@ -8,7 +8,7 @@ import ResultDisplay from '../ResultDisplay'
 import { filterByLines, pickRandomStation } from '@/lib/randomStation'
 import { paperTokens } from '@/lib/theme'
 import RevealRitual from '@/components/omikuji/RevealRitual'
-import { ticketNoFromToken, formatPickDate } from '@/lib/ticketNumber'
+import { formatPickDate } from '@/lib/ticketNumber'
 import { savePickToHistory } from '@/lib/pickHistory'
 import type { CanvasView, ConnectionView, LineView, StationView } from '../types'
 
@@ -34,6 +34,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   const [animationStations, setAnimationStations] = useState<StationView[]>([])
   const [result, setResult] = useState<StationView | null>(null)
   const [pickToken, setPickToken] = useState<string | null>(null)
+  const [pickNo, setPickNo] = useState<number | null>(null)
   const [commentCount, setCommentCount] = useState(0)
   const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -43,6 +44,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
     setSelectedLineCodes(codes)
     setResult(null)
     setPickToken(null)
+    setPickNo(null)
     setCommentCount(0)
     setPickPromise(null)
     setModalOpen(false)
@@ -69,11 +71,12 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
           }),
         })
         if (res.ok) {
-          const data = (await res.json()) as { token?: string; comment_count?: number }
+          const data = (await res.json()) as { token?: string; comment_count?: number; pick_no?: number }
           if (data.token) {
             setPickToken(data.token)
             savePickToHistory(data.token, finalStation.nameZh)
           }
+          if (typeof data.pick_no === 'number') setPickNo(data.pick_no)
           if (typeof data.comment_count === 'number') setCommentCount(data.comment_count)
         }
       } catch {
@@ -85,7 +88,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) {
       setAnimationStations([])
-      setModalOpen(true)
+      void request.then(() => setModalOpen(true))
       return
     }
 
@@ -163,7 +166,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
           <RevealRitual
             stationName={result.nameZh}
             stationNameEn={result.nameEn}
-            ticketNo={ticketNoFromToken(pickToken ?? String(result.id))}
+            ticketNo={pickNo !== null ? String(pickNo).padStart(4, '0') : '----'}
             dateLabel={formatPickDate()}
             modeLabel="捷運"
             waitFor={pickPromise}

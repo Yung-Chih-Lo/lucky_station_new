@@ -35,9 +35,16 @@ function loadRankings(transportType?: 'mrt' | 'tra'): Ranking[] {
     .all(...params) as Ranking[]
 }
 
+function loadTotalPicks(): number {
+  const sqlite = getSqlite()
+  const row = sqlite.prepare<[], { total: number }>('SELECT COUNT(*) AS total FROM station_picks').get()
+  return row?.total ?? 0
+}
+
 export default function StatsPage() {
   const all = loadRankings()
   const mrt = loadRankings('mrt')
   const tra = loadRankings('tra')
-  return <StatsClient all={all} mrt={mrt} tra={tra} />
+  const totalPicks = loadTotalPicks()
+  return <StatsClient all={all} mrt={mrt} tra={tra} totalPicks={totalPicks} />
 }

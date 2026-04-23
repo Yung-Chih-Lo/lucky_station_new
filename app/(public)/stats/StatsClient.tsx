@@ -19,6 +19,7 @@ type Props = {
   all: Ranking[]
   mrt: Ranking[]
   tra: Ranking[]
+  totalPicks: number
 }
 
 function columns() {
@@ -81,7 +82,7 @@ function renderTable(rows: Ranking[]) {
   )
 }
 
-export default function StatsClient({ all, mrt, tra }: Props) {
+export default function StatsClient({ all, mrt, tra, totalPicks }: Props) {
   const { setMode } = useThemeMode()
   useEffect(() => {
     setMode('mrt')
@@ -92,10 +93,13 @@ export default function StatsClient({ all, mrt, tra }: Props) {
       <Link href="/" style={{ color: 'var(--ink-muted)', fontSize: 13 }}>
         ← 回首頁
       </Link>
-      <Title level={1} style={{ marginTop: 16, color: 'var(--ink)' }}>
-        排行榜
-      </Title>
-      <Paragraph style={{ color: 'var(--ink-muted)' }}>
+      <div style={{ marginTop: 16, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <Title level={1} style={{ margin: 0, color: 'var(--ink)' }}>
+          排行榜
+        </Title>
+        <span style={totalBadgeStyle}>共 {totalPicks.toLocaleString()} 次抽籤</span>
+      </div>
+      <Paragraph style={{ color: 'var(--ink-muted)', marginTop: 8 }}>
         哪些車站最常被抽中？跨縣市同名站（例如七堵）會分開計算。
       </Paragraph>
 
@@ -109,4 +113,15 @@ export default function StatsClient({ all, mrt, tra }: Props) {
       />
     </div>
   )
+}
+
+const totalBadgeStyle: React.CSSProperties = {
+  fontSize: 12,
+  letterSpacing: '0.06em',
+  color: 'var(--ink-muted)',
+  background: 'var(--paper-surface-elevated)',
+  border: '1px solid var(--rule)',
+  borderRadius: 999,
+  padding: '2px 10px',
+  whiteSpace: 'nowrap',
 }

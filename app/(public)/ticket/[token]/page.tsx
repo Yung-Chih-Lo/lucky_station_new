@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import { getSqlite } from '@/db/client'
-import { ticketNoFromToken } from '@/lib/ticketNumber'
 import SealMark from '@/components/omikuji/SealMark'
 
 export const dynamic = 'force-dynamic'
@@ -43,7 +42,7 @@ export default function TicketPage({ params }: { params: { token: string } }) {
   if (!pick) notFound()
 
   const modeLabel = pick.transport_type === 'mrt' ? '捷運' : '台鐵'
-  const ticketNo = ticketNoFromToken(pick.token)
+  const ticketNo = String(pick.id).padStart(4, '0')
   const dateLabel = formatDate(pick.picked_at)
 
   return (
