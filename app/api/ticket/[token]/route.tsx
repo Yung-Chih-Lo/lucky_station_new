@@ -34,8 +34,9 @@ function formatDate(ms: number): string {
 
 export async function GET(
   req: Request,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
+  const { token } = await params
   const sqlite = getSqlite()
   const pick = sqlite
     .prepare<[string], PickRow>(
@@ -45,7 +46,7 @@ export async function GET(
        JOIN stations s ON s.id = p.station_id
        WHERE p.token = ?`,
     )
-    .get(params.token)
+    .get(token)
 
   if (!pick) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
@@ -59,7 +60,7 @@ export async function GET(
 
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || new URL(req.url).origin
-  const qrTarget = `${baseUrl}/comment?token=${encodeURIComponent(pick.token)}`
+  const qrTarget = `${baseUrl}/`
   const qrSvg = await QRCode.toString(qrTarget, {
     type: 'svg',
     margin: 1,
