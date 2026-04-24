@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import SealMark from './SealMark'
+import ScreenshotSaveBlock from '../ScreenshotSaveBlock'
 
 type Props = {
   /** Station name shown character-by-character during the type-in phase. */
@@ -11,6 +12,11 @@ type Props = {
   ticketNo: string
   dateLabel: string
   modeLabel: '捷運' | '台鐵'
+  /**
+   * Pick token. When present, renders a screenshot-save QR alongside the
+   * seal so users can save the result page for later recall.
+   */
+  token?: string
   /**
    * Promise that resolves once the pick-side server work has completed (e.g.
    * the `/api/pick` response). When provided, the ritual pauses at the end of
@@ -45,6 +51,7 @@ export default function RevealRitual({
   ticketNo,
   dateLabel,
   modeLabel,
+  token,
   waitFor,
   children,
   onDone,
@@ -141,7 +148,16 @@ export default function RevealRitual({
 
       <div className="omikuji-ritual-body">
         {children}
+        {token && (
+          <>
+            <p style={qrCaptionStyle}>
+              📸 截圖保存，之後打開相簿掃 QR Code 就可以寫心得嘍！
+            </p>
+            <div style={qrArrowStyle} aria-hidden="true">↓</div>
+          </>
+        )}
         <div style={sealRowStyle}>
+          {token && <ScreenshotSaveBlock token={token} size={80} />}
           <span className="omikuji-ritual-seal">
             <SealMark
               size={68}
@@ -186,11 +202,27 @@ const stageEnStyle: React.CSSProperties = {
 }
 
 const sealRowStyle: React.CSSProperties = {
-  marginTop: 20,
+  marginTop: 12,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'space-between',
   gap: 14,
+}
+
+const qrCaptionStyle: React.CSSProperties = {
+  margin: '24px 0 0',
+  fontSize: 13,
+  lineHeight: 1.5,
+  color: 'var(--ink-muted)',
+  textAlign: 'left',
+}
+
+const qrArrowStyle: React.CSSProperties = {
+  marginTop: 4,
+  fontSize: 16,
+  color: 'var(--ink-muted)',
+  textAlign: 'left',
+  paddingLeft: 28,
 }
 
 const dateTextStyle: React.CSSProperties = {

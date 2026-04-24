@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Empty } from 'antd'
+import { Button, Empty } from 'antd'
 import { EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
 import ShareableTicket from './omikuji/ShareableTicket'
 import type { LineView, StationView } from './types'
@@ -88,25 +88,24 @@ export default function ResultDisplay({ station, lines, token, commentCount = 0 
       </div>
 
       {token && (
-        <div style={{ width: '100%', marginTop: 18 }}>
+        <div style={{ width: '100%', marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <ShareableTicket token={token} stationNameZh={station.nameZh} />
+          <Link
+            href={
+              commentCount > 0
+                ? `/explore?station_id=${station.id}`
+                : `/comment?token=${encodeURIComponent(token)}`
+            }
+            style={{ display: 'block', width: '100%' }}
+          >
+            <Button size="large" block>
+              {commentCount > 0
+                ? `已有 ${commentCount} 位旅人抽到這站 · 看他們寫了什麼 →`
+                : '搶先留下這一站的心得 →'}
+            </Button>
+          </Link>
         </div>
       )}
-
-      <Link
-        href={
-          commentCount > 0
-            ? `/explore?station_id=${station.id}`
-            : token
-            ? `/comment?token=${encodeURIComponent(token)}`
-            : `/explore?station_id=${station.id}`
-        }
-        style={deepLinkStyle}
-      >
-        {commentCount > 0
-          ? `已有 ${commentCount} 位旅人抽到這站 · 看他們寫了什麼 →`
-          : '搶先留下這一站的心得 →'}
-      </Link>
     </div>
   )
 }
@@ -214,11 +213,3 @@ const relayTextStyle: React.CSSProperties = {
   lineHeight: 1.6,
 }
 
-const deepLinkStyle: React.CSSProperties = {
-  marginTop: 16,
-  fontSize: 13,
-  color: 'var(--ink-muted)',
-  textDecoration: 'none',
-  letterSpacing: '0.04em',
-  textAlign: 'center',
-}

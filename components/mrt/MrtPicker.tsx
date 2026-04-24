@@ -169,6 +169,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
             ticketNo={pickNo !== null ? String(pickNo).padStart(4, '0') : '----'}
             dateLabel={formatPickDate()}
             modeLabel="捷運"
+            token={pickToken ?? undefined}
             waitFor={pickPromise}
           >
             <ResultDisplay

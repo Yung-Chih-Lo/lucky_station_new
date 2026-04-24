@@ -105,32 +105,3 @@ describe('ShareableTicket — mobile (maxTouchPoints > 0)', () => {
   })
 })
 
-describe('ShareableTicket — self-reminder button', () => {
-  it('copies reminder text containing station name and comment URL', async () => {
-    setMaxTouchPoints(0)
-    const writeTextMock = vi.fn().mockResolvedValue(undefined)
-    defineNav('clipboard', { writeText: writeTextMock })
-
-    render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
-    const btn = await screen.findByRole('button', { name: /傳連結給自己/ })
-    await userEvent.click(btn)
-
-    await vi.waitFor(() => expect(writeTextMock).toHaveBeenCalledTimes(1))
-    const payload = writeTextMock.mock.calls[0][0] as string
-    expect(payload).toContain(`去「${NAME}」寫心得`)
-    expect(payload).toContain(`/comment?token=${TOKEN}`)
-  })
-
-  it('surfaces the reminder text to the user when writeText rejects', async () => {
-    setMaxTouchPoints(0)
-    const writeTextMock = vi.fn().mockRejectedValue(new Error('denied'))
-    defineNav('clipboard', { writeText: writeTextMock })
-
-    render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
-    const btn = await screen.findByRole('button', { name: /傳連結給自己/ })
-    await userEvent.click(btn)
-
-    await vi.waitFor(() => expect(writeTextMock).toHaveBeenCalledTimes(1))
-    await screen.findByText(new RegExp(`去「${NAME}」寫心得`))
-  })
-})

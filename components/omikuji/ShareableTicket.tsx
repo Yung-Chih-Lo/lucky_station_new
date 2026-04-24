@@ -94,49 +94,20 @@ export default function ShareableTicket({ token, stationNameZh }: Props) {
     }
   }
 
-  const buildReminderText = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    return `去「${stationNameZh}」寫心得 → ${origin}/comment?token=${encodeURIComponent(token)}`
-  }
-
-  const handleCopyReminder = async () => {
-    const reminderText = buildReminderText()
-    const canWriteText =
-      typeof navigator !== 'undefined' &&
-      typeof navigator.clipboard?.writeText === 'function'
-
-    if (!canWriteText) {
-      messageApi.info(reminderText)
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(reminderText)
-      messageApi.success('已複製，貼到 Line 給自己就不會忘')
-    } catch {
-      messageApi.info(reminderText)
-    }
-  }
-
   const buttonLabel = isTouch === false ? '複製籤紙圖片' : '曬出我的籤'
 
   return (
     <>
       {contextHolder}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Button
-          size="large"
-          block
-          icon={<ShareAltOutlined />}
-          loading={isSharing}
-          onClick={handleClick}
-        >
-          {buttonLabel}
-        </Button>
-        <Button type="link" block onClick={handleCopyReminder}>
-          傳連結給自己
-        </Button>
-      </div>
+      <Button
+        size="large"
+        block
+        icon={<ShareAltOutlined />}
+        loading={isSharing}
+        onClick={handleClick}
+      >
+        {buttonLabel}
+      </Button>
     </>
   )
 }

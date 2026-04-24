@@ -69,7 +69,7 @@ export default function PickHistory() {
             >
               <div style={cardRow}>
                 <span style={stationNameActive}>{entry.stationNameZh}</span>
-                <span style={arrowStyle}>→</span>
+                <span style={badgeUnwritten}>未寫心得</span>
               </div>
               <span style={dateStyle}>{formatRelative(entry.pickedAt)}</span>
             </Link>
@@ -138,18 +138,21 @@ const stationNameUsed: React.CSSProperties = {
   color: 'var(--ink-muted)',
 }
 
-const arrowStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: 'var(--accent)',
-  flexShrink: 0,
-}
-
 const badgeUsed: React.CSSProperties = {
   fontSize: 10,
   padding: '2px 6px',
   borderRadius: 999,
   border: '1px solid var(--rule)',
   color: 'var(--ink-muted)',
+  flexShrink: 0,
+}
+
+const badgeUnwritten: React.CSSProperties = {
+  fontSize: 10,
+  padding: '2px 6px',
+  borderRadius: 999,
+  border: '1px solid var(--accent)',
+  color: 'var(--accent)',
   flexShrink: 0,
 }
 

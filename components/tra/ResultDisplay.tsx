@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Button } from 'antd'
 import { EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
 import Link from 'next/link'
 import ShareableTicket from '@/components/omikuji/ShareableTicket'
@@ -71,18 +72,19 @@ export default function TraResultDisplay({ station, token, commentCount = 0 }: P
         </a>
       </div>
 
-      <div style={{ width: '100%', marginTop: 18 }}>
+      <div style={{ width: '100%', marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <ShareableTicket token={token} stationNameZh={station.nameZh} />
+        <Link
+          href={commentCount > 0 ? `/explore?station_id=${station.id}` : commentLink}
+          style={{ display: 'block', width: '100%' }}
+        >
+          <Button size="large" block>
+            {commentCount > 0
+              ? `已有 ${commentCount} 位旅人抽到這站 · 看他們寫了什麼 →`
+              : '搶先留下這一站的心得 →'}
+          </Button>
+        </Link>
       </div>
-
-      <Link
-        href={commentCount > 0 ? `/explore?station_id=${station.id}` : commentLink}
-        style={deepLinkStyle}
-      >
-        {commentCount > 0
-          ? `已有 ${commentCount} 位旅人抽到這站 · 看他們寫了什麼 →`
-          : '搶先留下這一站的心得 →'}
-      </Link>
     </div>
   )
 }
@@ -177,11 +179,3 @@ const relayTextStyle: React.CSSProperties = {
   lineHeight: 1.6,
 }
 
-const deepLinkStyle: React.CSSProperties = {
-  marginTop: 12,
-  fontSize: 13,
-  color: 'var(--ink-muted)',
-  textDecoration: 'none',
-  letterSpacing: '0.04em',
-  textAlign: 'center',
-}

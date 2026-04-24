@@ -217,6 +217,7 @@ export default function TraPicker({ counties, countyToStations }: Props) {
               ticketNo={String(result.pick_no).padStart(4, '0')}
               dateLabel={formatPickDate()}
               modeLabel="台鐵"
+              token={result.token}
               waitFor={pickPromise}
             >
               <TraResultDisplay
