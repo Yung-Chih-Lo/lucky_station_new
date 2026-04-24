@@ -58,7 +58,7 @@ describe('ShareableTicket — desktop (maxTouchPoints = 0)', () => {
     defineNav('share', shareMock)
 
     render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
-    const btn = await screen.findByRole('button', { name: /複製籤紙圖片/ })
+    const btn = await screen.findByRole('button', { name: /分享給你的好友/ })
     await userEvent.click(btn)
 
     await vi.waitFor(() => expect(writeMock).toHaveBeenCalledTimes(1))
@@ -77,7 +77,7 @@ describe('ShareableTicket — desktop (maxTouchPoints = 0)', () => {
     vi.stubGlobal('open', openMock)
 
     render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
-    const btn = await screen.findByRole('button', { name: /複製籤紙圖片/ })
+    const btn = await screen.findByRole('button', { name: /分享給你的好友/ })
     await userEvent.click(btn)
 
     await vi.waitFor(() => expect(openMock).toHaveBeenCalled())
@@ -94,7 +94,7 @@ describe('ShareableTicket — mobile (maxTouchPoints > 0)', () => {
     defineNav('canShare', canShareMock)
 
     render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
-    const btn = await screen.findByRole('button', { name: /曬出我的籤/ })
+    const btn = await screen.findByRole('button', { name: /分享給你的好友/ })
     await userEvent.click(btn)
 
     await vi.waitFor(() => expect(shareMock).toHaveBeenCalledTimes(1))
@@ -102,6 +102,20 @@ describe('ShareableTicket — mobile (maxTouchPoints > 0)', () => {
     expect(payload.files).toHaveLength(1)
     expect(payload.files[0]).toBeInstanceOf(File)
     expect(payload.files[0].type).toBe('image/png')
+  })
+})
+
+describe('ShareableTicket — label is unified across devices', () => {
+  it('renders label 分享給你的好友 on desktop', async () => {
+    setMaxTouchPoints(0)
+    render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
+    expect(await screen.findByRole('button', { name: /分享給你的好友/ })).toBeDefined()
+  })
+
+  it('renders label 分享給你的好友 on touch devices', async () => {
+    setMaxTouchPoints(1)
+    render(<ShareableTicket token={TOKEN} stationNameZh={NAME} />)
+    expect(await screen.findByRole('button', { name: /分享給你的好友/ })).toBeDefined()
   })
 })
 

@@ -1,8 +1,5 @@
-# station-relay Specification
+## MODIFIED Requirements
 
-## Purpose
-Surfaces the most recent traveler comment for a station on the result page, creating a "relay baton" effect: each traveler reads the previous person's message and is motivated to leave one for the next.
-## Requirements
 ### Requirement: Relay API returns latest comment excerpt for a station
 系統 SHALL 提供 `GET /api/stations/[id]/relay` endpoint，回傳該站最新一則已通過的留言資料與總留言數，以支援 result modal 的「前旅人隨筆」卡片與「首旅人」彩蛋狀態切換。
 
@@ -69,6 +66,8 @@ Surfaces the most recent traveler comment for a station on the result page, crea
 - **AND** 下半區 `<ScanCtaCard>` SHALL 顯示但使用保守文案（預設 `first` 變體）
 - **AND** SHALL NOT 顯示錯誤訊息
 
+## ADDED Requirements
+
 ### Requirement: Relay API response shape is backward compatible with prior excerpt-only consumers
 The extended response shape SHALL be additive only: existing fields SHALL retain their current types and semantics, and new fields (`handle`, `postedAt`, `count`) SHALL be added alongside without renaming or removing `excerpt`.
 
@@ -76,4 +75,3 @@ The extended response shape SHALL be additive only: existing fields SHALL retain
 - **WHEN** a legacy consumer reads only `excerpt` from the response
 - **THEN** the field SHALL have type `string | null`
 - **AND** the value SHALL be derived from the latest comment with the same 50-character truncation rule previously in effect
-

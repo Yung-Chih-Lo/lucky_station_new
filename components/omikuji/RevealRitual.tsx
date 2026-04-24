@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import SealMark from './SealMark'
-import ScreenshotSaveBlock from '../ScreenshotSaveBlock'
+import FirstArrivalCard from './FirstArrivalCard'
+import RelayExcerptCard from './RelayExcerptCard'
+import ScanCtaCard from './ScanCtaCard'
 
 type Props = {
   /** Station name shown character-by-character during the type-in phase. */
@@ -11,12 +12,10 @@ type Props = {
   stationNameEn?: string | null
   ticketNo: string
   dateLabel: string
-  modeLabel: '捷運' | '台鐵'
-  /**
-   * Pick token. When present, renders a screenshot-save QR alongside the
-   * seal so users can save the result page for later recall.
-   */
+  /** Required for the scan card QR and share action. */
   token?: string
+  /** Station ID used to fetch the relay payload for the upper-zone card. */
+  stationId: number
   /**
    * Promise that resolves once the pick-side server work has completed (e.g.
    * the `/api/pick` response). When provided, the ritual pauses at the end of
@@ -24,20 +23,26 @@ type Props = {
    * If omitted, phases advance on their fixed timers.
    */
   waitFor?: Promise<void> | null
-  /** Post-reveal content (buttons, metadata). Revealed during phase 4. */
+  /** Post-reveal content (station name, chips, links). Shown in the upper zone. */
   children: ReactNode
   /** Called once the full ritual timeline finishes. */
   onDone?: () => void
 }
 
-type Phase = 'shake' | 'pop' | 'pop-hold' | 'type' | 'stamp' | 'done'
+type Phase = 'shake' | 'pop' | 'pop-hold' | 'type' | 'done'
+
+type RelayPayload = {
+  excerpt: string | null
+  handle: string | null
+  postedAt: string | null
+  count: number
+}
 
 const TIMING = {
   shake: 300,
   pop: 200,
   typePerChar: 60,
   typeTail: 120,
-  stamp: 260,
 } as const
 
 function prefersReducedMotion(): boolean {
@@ -50,15 +55,31 @@ export default function RevealRitual({
   stationNameEn,
   ticketNo,
   dateLabel,
-  modeLabel,
   token,
+  stationId,
   waitFor,
   children,
   onDone,
 }: Props) {
   const [phase, setPhase] = useState<Phase>('shake')
+  const [relay, setRelay] = useState<RelayPayload | 'error' | null>(null)
   const doneCalled = useRef(false)
   const chars = [...stationName]
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/stations/${stationId}/relay`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('relay_fetch_failed'))))
+      .then((data: RelayPayload) => {
+        if (!cancelled) setRelay(data)
+      })
+      .catch(() => {
+        if (!cancelled) setRelay('error')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [stationId])
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -87,7 +108,6 @@ export default function RevealRitual({
           if (!cancelled) setPhase('type')
         })
         .catch(() => {
-          // on error, still advance to avoid a stuck modal
           if (!cancelled) setPhase('type')
         })
     })
@@ -99,33 +119,29 @@ export default function RevealRitual({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [waitFor])
 
-  // phase === 'shake' auto advances to pop at TIMING.shake (handled in effect
-  // above). Once we're in 'type', schedule the next phases on top of it.
   useEffect(() => {
     if (phase !== 'type') return
     const typeMs = chars.length * TIMING.typePerChar + TIMING.typeTail
-    const t1 = setTimeout(() => setPhase('stamp'), typeMs)
-    const t2 = setTimeout(() => {
+    const t = setTimeout(() => {
       setPhase('done')
       if (!doneCalled.current) {
         doneCalled.current = true
         onDone?.()
       }
-    }, typeMs + TIMING.stamp)
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-    }
+    }, typeMs)
+    return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, chars.length])
 
   const classNames = ['omikuji-ritual']
   if (phase === 'shake') classNames.push('is-shaking', 'is-flashing')
-  if (phase === 'pop-hold' || phase === 'type' || phase === 'stamp' || phase === 'done')
-    classNames.push('is-popping')
-  if (phase === 'type' || phase === 'stamp' || phase === 'done') classNames.push('is-typing')
-  if (phase === 'stamp' || phase === 'done') classNames.push('is-stamped')
+  if (phase === 'pop-hold' || phase === 'type' || phase === 'done') classNames.push('is-popping')
+  if (phase === 'type' || phase === 'done') classNames.push('is-typing')
   if (phase === 'done') classNames.push('is-done')
+
+  const showUpper = relay !== null && relay !== 'error'
+  const hasComments = showUpper && (relay as RelayPayload).count > 0
+  const scanVariant: 'relay' | 'first' = hasComments ? 'relay' : 'first'
 
   return (
     <div className={classNames.join(' ')} style={ritualStyle}>
@@ -148,26 +164,29 @@ export default function RevealRitual({
 
       <div className="omikuji-ritual-body">
         {children}
-        {token && (
-          <>
-            <p style={qrCaptionStyle}>
-              📸 截圖保存，之後打開相簿掃 QR Code 就可以寫心得嘍！
-            </p>
-            <div style={qrArrowStyle} aria-hidden="true">↓</div>
-          </>
+
+        {hasComments && (relay as RelayPayload).excerpt && (relay as RelayPayload).handle && (relay as RelayPayload).postedAt && (
+          <RelayExcerptCard
+            stationId={stationId}
+            excerpt={(relay as RelayPayload).excerpt as string}
+            handle={(relay as RelayPayload).handle as string}
+            postedAt={(relay as RelayPayload).postedAt as string}
+            count={(relay as RelayPayload).count}
+          />
         )}
-        <div style={sealRowStyle}>
-          {token && <ScreenshotSaveBlock token={token} size={80} />}
-          <span className="omikuji-ritual-seal">
-            <SealMark
-              size={68}
-              label={modeLabel}
-              sublabel={`No.${ticketNo}`}
-              ariaLabel={`${modeLabel}印章 · ${dateLabel} · No.${ticketNo}`}
-            />
-          </span>
-          <span style={dateTextStyle}>{dateLabel}</span>
-        </div>
+        {showUpper && !hasComments && <FirstArrivalCard />}
+
+        <hr style={dividerStyle} aria-hidden="true" />
+
+        {token && (
+          <ScanCtaCard
+            token={token}
+            stationNameZh={stationName}
+            ticketNo={ticketNo}
+            dateLabel={dateLabel}
+            variant={scanVariant}
+          />
+        )}
       </div>
     </div>
   )
@@ -201,34 +220,8 @@ const stageEnStyle: React.CSSProperties = {
   textAlign: 'center',
 }
 
-const sealRowStyle: React.CSSProperties = {
-  marginTop: 12,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: 14,
-}
-
-const qrCaptionStyle: React.CSSProperties = {
-  margin: '24px 0 0',
-  fontSize: 13,
-  lineHeight: 1.5,
-  color: 'var(--ink-muted)',
-  textAlign: 'left',
-}
-
-const qrArrowStyle: React.CSSProperties = {
-  marginTop: 4,
-  fontSize: 16,
-  color: 'var(--ink-muted)',
-  textAlign: 'left',
-  paddingLeft: 28,
-}
-
-const dateTextStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontSize: 12,
-  letterSpacing: '0.24em',
-  color: 'var(--ink-muted)',
-  textTransform: 'uppercase',
+const dividerStyle: React.CSSProperties = {
+  margin: '20px 0 4px',
+  border: 0,
+  borderTop: '1px dashed var(--rule)',
 }

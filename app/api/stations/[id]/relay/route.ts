@@ -20,20 +20,33 @@ export async function GET(
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
 
-  const row = sqlite
+  const latest = sqlite
     .prepare(
-      `SELECT content FROM comments
+      `SELECT id, content, created_at FROM comments
        WHERE station_id = ?
        ORDER BY created_at DESC
        LIMIT 1`,
     )
-    .get(stationId) as { content: string } | undefined
+    .get(stationId) as { id: number; content: string; created_at: number } | undefined
 
-  if (!row) {
-    return NextResponse.json({ excerpt: null })
+  const countRow = sqlite
+    .prepare(`SELECT COUNT(*) AS c FROM comments WHERE station_id = ?`)
+    .get(stationId) as { c: number }
+  const count = countRow?.c ?? 0
+
+  if (!latest) {
+    return NextResponse.json({
+      excerpt: null,
+      handle: null,
+      postedAt: null,
+      count,
+    })
   }
 
-  const content = row.content
-  const excerpt = content.length > 50 ? content.slice(0, 50) + '…' : content
-  return NextResponse.json({ excerpt })
+  const excerpt =
+    latest.content.length > 50 ? latest.content.slice(0, 50) + '…' : latest.content
+  const handle = String(latest.id).padStart(4, '0')
+  const postedAt = new Date(latest.created_at).toISOString()
+
+  return NextResponse.json({ excerpt, handle, postedAt, count })
 }

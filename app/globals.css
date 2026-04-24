@@ -232,12 +232,6 @@ html, body {
   100% { opacity: 0; }
 }
 
-@keyframes omikuji-stamp {
-  0%   { transform: scale(1.6) rotate(18deg); opacity: 0; }
-  60%  { transform: scale(0.92) rotate(-12deg); opacity: 1; }
-  100% { transform: scale(1) rotate(-8deg); opacity: 1; }
-}
-
 @keyframes omikuji-char-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -290,7 +284,7 @@ html, body {
   animation: omikuji-pop 380ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
 
-.omikuji-ritual.is-stamped .omikuji-ritual-stage {
+.omikuji-ritual.is-done .omikuji-ritual-stage {
   animation: omikuji-stage-out 300ms ease-out 80ms both;
 }
 
@@ -309,33 +303,22 @@ html, body {
   opacity: 0;
 }
 
-.omikuji-ritual.is-stamped .omikuji-ritual-body {
+.omikuji-ritual.is-done .omikuji-ritual-body {
   animation: omikuji-body-in 360ms ease-out 120ms both;
-}
-
-.omikuji-ritual-seal {
-  display: inline-flex;
-  opacity: 0;
-}
-
-.omikuji-ritual.is-stamped .omikuji-ritual-seal {
-  animation: omikuji-stamp 260ms cubic-bezier(0.4, 1.4, 0.4, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .brand-reveal,
   .omikuji-ritual.is-shaking,
   .omikuji-ritual.is-popping .omikuji-ritual-stage,
-  .omikuji-ritual.is-stamped .omikuji-ritual-stage,
+  .omikuji-ritual.is-done .omikuji-ritual-stage,
   .omikuji-ritual.is-typing .omikuji-ritual-char,
   .omikuji-ritual.is-flashing .omikuji-ritual-flash,
-  .omikuji-ritual.is-stamped .omikuji-ritual-body,
-  .omikuji-ritual.is-stamped .omikuji-ritual-seal {
+  .omikuji-ritual.is-done .omikuji-ritual-body {
     animation: none;
   }
   .omikuji-ritual-char,
-  .omikuji-ritual-body,
-  .omikuji-ritual-seal {
+  .omikuji-ritual-body {
     opacity: 1;
     transform: none;
   }

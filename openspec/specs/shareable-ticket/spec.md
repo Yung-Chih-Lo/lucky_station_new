@@ -69,28 +69,30 @@ The ticket SHALL NOT contain any emoji characters.
 - **AND** loading that URL SHALL render the app landing page
 
 ### Requirement: Result modal exposes a share action
-The picker's result modal SHALL include a share action alongside the existing "留下心得" CTA. The action's behavior and label SHALL depend on whether the user's device is touch-capable:
+The picker's result modal SHALL include a share action rendered inside the scan-cta card in the reveal footer. The action SHALL be labeled `分享給你的好友` regardless of device capability, and SHALL be styled as a solid-dark (primary-weight) Antd `Button`.
 
-- On touch-capable devices (`navigator.maxTouchPoints > 0`), the button SHALL be labeled "曬出我的籤" and activating it SHALL invoke the Web Share API with the generated ticket PNG.
-- On non-touch devices (desktop), the button SHALL be labeled "複製籤紙圖片" and activating it SHALL write the ticket PNG to the system clipboard as a single `image/png` flavor, then show a confirmation toast.
+The action's *behavior* SHALL depend on whether the user's device is touch-capable:
+
+- On touch-capable devices (`navigator.maxTouchPoints > 0`), activating the button SHALL invoke the Web Share API with the generated ticket PNG.
+- On non-touch devices (desktop), activating the button SHALL write the ticket PNG to the system clipboard as a single `image/png` flavor, then show a confirmation toast.
 - When neither path is available (missing API or runtime error that is not an `AbortError`), the app SHALL fall back to opening the ticket PNG URL in a new tab.
 
-#### Scenario: Share button is present in modal
+#### Scenario: Share button is present in modal and uses the unified label
 - **WHEN** the result modal opens after a successful pick
-- **THEN** the modal SHALL contain a visible share/copy button
+- **THEN** the modal SHALL contain a visible share/copy button inside the scan-cta card
+- **AND** the button label SHALL read `分享給你的好友`
 - **AND** the button SHALL be reachable with keyboard focus
+- **AND** the button SHALL render with a solid-dark background and light text (primary visual weight)
 
 #### Scenario: Touch device uses native share
 - **WHEN** the user activates the button on a device where `navigator.maxTouchPoints > 0` AND the browser supports `navigator.share` with file support
-- **THEN** the app SHALL be labeled "曬出我的籤"
-- **AND** it SHALL call `navigator.share({ files: [<png>], title, text })` with the generated ticket PNG
+- **THEN** the app SHALL call `navigator.share({ files: [<png>], title, text })` with the generated ticket PNG
 - **AND** it SHALL NOT write to the system clipboard
 - **AND** it SHALL NOT open a new tab as a fallback
 
 #### Scenario: Desktop copies a single PNG to the clipboard
 - **WHEN** the user activates the button on a device where `navigator.maxTouchPoints === 0` AND the browser supports `navigator.clipboard.write` with `ClipboardItem`
-- **THEN** the button SHALL be labeled "複製籤紙圖片"
-- **AND** the app SHALL call `navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])` with exactly one flavor
+- **THEN** the app SHALL call `navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])` with exactly one flavor
 - **AND** the app SHALL show a visible confirmation (e.g. toast) that the image was copied
 - **AND** it SHALL NOT call `navigator.share`
 

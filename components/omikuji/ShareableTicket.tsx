@@ -94,19 +94,24 @@ export default function ShareableTicket({ token, stationNameZh }: Props) {
     }
   }
 
-  const buttonLabel = isTouch === false ? '複製籤紙圖片' : '曬出我的籤'
-
   return (
     <>
       {contextHolder}
       <Button
         size="large"
         block
+        type="primary"
         icon={<ShareAltOutlined />}
         loading={isSharing}
         onClick={handleClick}
+        style={{
+          background: 'var(--ink)',
+          borderColor: 'var(--ink)',
+          color: 'var(--paper-surface)',
+          fontWeight: 500,
+        }}
       >
-        {buttonLabel}
+        分享給你的好友
       </Button>
     </>
   )

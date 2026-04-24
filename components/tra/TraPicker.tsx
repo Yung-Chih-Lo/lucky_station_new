@@ -10,13 +10,6 @@ import { formatPickDate } from '@/lib/ticketNumber'
 import { paperTokens } from '@/lib/theme'
 import { savePickToHistory } from '@/lib/pickHistory'
 
-const MODAL_TITLES = [
-  '下一站開往…',
-  '命運決定了…',
-  '今天的籤',
-  '台鐵替你選的是',
-]
-
 const CYCLE_INTERVAL_MS = 80
 const MIN_CYCLE_MS = 1500
 
@@ -52,7 +45,6 @@ export default function TraPicker({ counties, countyToStations }: Props) {
   const [isPicking, setIsPicking] = useState(false)
   const [result, setResult] = useState<PickResult | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [titleIndex, setTitleIndex] = useState(0)
   const [messageApi, contextHolder] = message.useMessage()
   const [cyclingName, setCyclingName] = useState('…')
   const [showResult, setShowResult] = useState(false)
@@ -155,7 +147,6 @@ export default function TraPicker({ counties, countyToStations }: Props) {
       }
     })()
 
-    setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
     setPickPromise(request)
     setModalOpen(true)
   }
@@ -194,7 +185,6 @@ export default function TraPicker({ counties, countyToStations }: Props) {
       </div>
 
       <Modal
-        title={<span style={modalTitleStyle}>{MODAL_TITLES[titleIndex]}</span>}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
@@ -204,8 +194,8 @@ export default function TraPicker({ counties, countyToStations }: Props) {
             background: 'var(--paper-surface-elevated)',
             border: '1px solid var(--rule-strong)',
             borderRadius: 'var(--radius-lg)',
+            padding: '40px 24px 24px',
           },
-          header: { background: 'transparent', borderBottom: 'none' },
           mask: { background: paperTokens.maskBg },
         }}
       >
@@ -216,15 +206,11 @@ export default function TraPicker({ counties, countyToStations }: Props) {
               stationNameEn={result.station.nameEn}
               ticketNo={String(result.pick_no).padStart(4, '0')}
               dateLabel={formatPickDate()}
-              modeLabel="台鐵"
               token={result.token}
+              stationId={result.station.id}
               waitFor={pickPromise}
             >
-              <TraResultDisplay
-                station={result.station}
-                token={result.token}
-                commentCount={result.comment_count ?? 0}
-              />
+              <TraResultDisplay station={result.station} />
             </RevealRitual>
           ) : (
             <div style={ritualPendingStyle} aria-live="polite">
@@ -309,13 +295,3 @@ const cyclingNameStyle: React.CSSProperties = {
   textAlign: 'center',
 }
 
-const modalTitleStyle: React.CSSProperties = {
-  display: 'block',
-  textAlign: 'center',
-  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontSize: 12,
-  fontWeight: 500,
-  letterSpacing: '0.28em',
-  textTransform: 'uppercase',
-  color: 'var(--ink-muted)',
-}

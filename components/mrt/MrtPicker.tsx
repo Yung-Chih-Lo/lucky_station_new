@@ -12,13 +12,6 @@ import { formatPickDate } from '@/lib/ticketNumber'
 import { savePickToHistory } from '@/lib/pickHistory'
 import type { CanvasView, ConnectionView, LineView, StationView } from '../types'
 
-const MODAL_TITLES = [
-  '下一班列車開往…',
-  '命運決定了…',
-  '今天的籤',
-  '捷運替你選的是',
-]
-
 const INTERMEDIATE_HOPS = 12
 
 type Props = {
@@ -35,17 +28,14 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   const [result, setResult] = useState<StationView | null>(null)
   const [pickToken, setPickToken] = useState<string | null>(null)
   const [pickNo, setPickNo] = useState<number | null>(null)
-  const [commentCount, setCommentCount] = useState(0)
   const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [titleIndex, setTitleIndex] = useState(0)
 
   const handleLineChange = (codes: string[]) => {
     setSelectedLineCodes(codes)
     setResult(null)
     setPickToken(null)
     setPickNo(null)
-    setCommentCount(0)
     setPickPromise(null)
     setModalOpen(false)
   }
@@ -55,10 +45,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
     if (!finalStation) return
 
     setResult(finalStation)
-    setTitleIndex((i) => (i + 1) % MODAL_TITLES.length)
 
-    // Register the pick on the server; the returned promise feeds RevealRitual
-    // so it can hold the stamp phase until the token + comment_count land.
     const request = (async () => {
       try {
         const res = await fetch('/api/pick', {
@@ -71,13 +58,12 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
           }),
         })
         if (res.ok) {
-          const data = (await res.json()) as { token?: string; comment_count?: number; pick_no?: number }
+          const data = (await res.json()) as { token?: string; pick_no?: number }
           if (data.token) {
             setPickToken(data.token)
             savePickToHistory(data.token, finalStation.nameZh)
           }
           if (typeof data.pick_no === 'number') setPickNo(data.pick_no)
-          if (typeof data.comment_count === 'number') setCommentCount(data.comment_count)
         }
       } catch {
         // ignore; UI will render with a generated fallback token
@@ -147,7 +133,6 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
       </div>
 
       <Modal
-        title={<span style={modalTitleStyle}>{MODAL_TITLES[titleIndex]}</span>}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
@@ -157,8 +142,8 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
             background: 'var(--paper-surface-elevated)',
             border: '1px solid var(--rule-strong)',
             borderRadius: 'var(--radius-lg)',
+            padding: '40px 24px 24px',
           },
-          header: { background: 'transparent', borderBottom: 'none' },
           mask: { background: paperTokens.maskBg },
         }}
       >
@@ -168,16 +153,11 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
             stationNameEn={result.nameEn}
             ticketNo={pickNo !== null ? String(pickNo).padStart(4, '0') : '----'}
             dateLabel={formatPickDate()}
-            modeLabel="捷運"
             token={pickToken ?? undefined}
+            stationId={result.id}
             waitFor={pickPromise}
           >
-            <ResultDisplay
-              station={result}
-              lines={lines}
-              token={pickToken}
-              commentCount={commentCount}
-            />
+            <ResultDisplay station={result} lines={lines} />
           </RevealRitual>
         )}
       </Modal>
@@ -247,13 +227,3 @@ const mapInnerStyle: React.CSSProperties = {
   alignItems: 'center',
 }
 
-const modalTitleStyle: React.CSSProperties = {
-  display: 'block',
-  textAlign: 'center',
-  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontSize: 12,
-  fontWeight: 500,
-  letterSpacing: '0.28em',
-  textTransform: 'uppercase',
-  color: 'var(--ink-muted)',
-}
