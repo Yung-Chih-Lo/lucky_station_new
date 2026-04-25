@@ -74,7 +74,7 @@ export default function TraSidebar({
         loading={isPicking}
         icon={<SwapOutlined />}
       >
-        {isPicking ? '抽籤中…' : '命．中．注．站'}
+        {isPicking ? '抽籤中…' : '命．中．注．定'}
       </Button>
     </div>
   )
