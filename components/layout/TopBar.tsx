@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { CloseOutlined, MenuOutlined } from '@ant-design/icons'
 import { useThemeMode } from '@/components/ThemeProvider'
 import type { ThemeMode } from '@/lib/theme'
 
@@ -20,80 +22,114 @@ export default function TopBar() {
   const router = useRouter()
   const pathname = usePathname()
   const isHome = pathname === '/'
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const closeMenu = () => setMenuOpen(false)
 
   const selectMode = (next: ThemeMode) => {
     setMode(next)
+    closeMenu()
     if (!isHome) {
       router.push('/')
     }
   }
 
+  useEffect(() => {
+    closeMenu()
+  }, [pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMenu()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
+
   return (
-    <header style={barStyle}>
-      <Link href="/" style={wordmarkLinkStyle} aria-label="回到首頁">
-        <span style={wordmarkPrimaryStyle}>坐火行</span>
-      </Link>
+    <header className="topbar">
+      <div className="topbar-bar">
+        <Link href="/" style={wordmarkLinkStyle} aria-label="回到首頁" onClick={closeMenu}>
+          <span style={wordmarkPrimaryStyle}>坐火行</span>
+        </Link>
 
-      <nav style={tabsStyle} aria-label="選擇運輸類型">
-        {(Object.keys(MODE_LABEL) as ThemeMode[]).map((m) => {
-          const active = mode === m
-          return (
-            <button
-              key={m}
-              type="button"
-              onClick={() => selectMode(m)}
-              style={{
-                ...tabButtonStyle,
-                color: active ? 'var(--accent)' : 'var(--ink-muted)',
-                borderBottomColor: active ? 'var(--accent)' : 'transparent',
-                fontWeight: active ? 700 : 500,
-              }}
-              aria-current={active ? 'page' : undefined}
-            >
-              {MODE_LABEL[m]}
-            </button>
-          )
-        })}
-      </nav>
+        <nav className="topbar-tabs" aria-label="選擇運輸類型">
+          {(Object.keys(MODE_LABEL) as ThemeMode[]).map((m) => {
+            const active = mode === m
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => selectMode(m)}
+                style={{
+                  ...tabButtonStyle,
+                  color: active ? 'var(--accent)' : 'var(--ink-muted)',
+                  borderBottomColor: active ? 'var(--accent)' : 'transparent',
+                  fontWeight: active ? 700 : 500,
+                }}
+                aria-current={active ? 'page' : undefined}
+              >
+                {MODE_LABEL[m]}
+              </button>
+            )
+          })}
+        </nav>
 
-      <div style={navRightStyle}>
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                ...navLinkStyle,
-                color: active ? 'var(--ink)' : 'var(--ink-muted)',
-                borderBottomColor: active ? 'var(--accent)' : 'transparent',
-              }}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
+        <div className="topbar-nav-right">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  ...navLinkStyle,
+                  color: active ? 'var(--ink)' : 'var(--ink-muted)',
+                  borderBottomColor: active ? 'var(--accent)' : 'transparent',
+                }}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
+        </div>
+
+        <button
+          type="button"
+          className="topbar-hamburger"
+          aria-label={menuOpen ? '關閉選單' : '開啟選單'}
+          aria-expanded={menuOpen}
+          aria-controls="topbar-mobile-menu"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          {menuOpen ? <CloseOutlined /> : <MenuOutlined />}
+        </button>
       </div>
+
+      {menuOpen && (
+        <div id="topbar-mobile-menu" className="topbar-mobile-menu">
+          {NAV_ITEMS.map((item) => {
+            const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMenu}
+                className="topbar-mobile-menu-item"
+                style={{ color: active ? 'var(--ink)' : 'var(--ink-muted)' }}
+              >
+                {item.label}
+                <span aria-hidden="true" className="topbar-mobile-menu-arrow">
+                  →
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      )}
     </header>
   )
-}
-
-const barStyle: React.CSSProperties = {
-  position: 'sticky',
-  top: 0,
-  zIndex: 20,
-  height: 64,
-  display: 'grid',
-  gridTemplateColumns: 'minmax(140px, 1fr) auto minmax(140px, 1fr)',
-  alignItems: 'center',
-  gap: 16,
-  padding: '0 24px',
-  background: 'var(--paper-surface)',
-  borderBottom: '1px solid var(--rule)',
-  backgroundImage: `repeating-linear-gradient(90deg, var(--rule-strong) 0, var(--rule-strong) 4px, transparent 4px, transparent 12px)`,
-  backgroundPosition: 'bottom left',
-  backgroundRepeat: 'repeat-x',
-  backgroundSize: '100% 1px',
 }
 
 const wordmarkLinkStyle: React.CSSProperties = {
@@ -113,22 +149,6 @@ const wordmarkPrimaryStyle: React.CSSProperties = {
   color: 'var(--ink)',
 }
 
-const wordmarkCaptionStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-sans), "Noto Sans TC", system-ui, sans-serif',
-  fontWeight: 500,
-  fontSize: 11,
-  letterSpacing: '0.32em',
-  color: 'var(--ink-muted)',
-  textTransform: 'uppercase',
-}
-
-const tabsStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 6,
-  justifySelf: 'center',
-}
-
 const tabButtonStyle: React.CSSProperties = {
   appearance: 'none',
   background: 'transparent',
@@ -140,13 +160,6 @@ const tabButtonStyle: React.CSSProperties = {
   letterSpacing: '0.12em',
   cursor: 'pointer',
   transition: 'color 200ms ease, border-color 200ms ease',
-}
-
-const navRightStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'flex-end',
-  gap: 20,
 }
 
 const navLinkStyle: React.CSSProperties = {

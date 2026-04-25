@@ -361,3 +361,136 @@ html, body {
     position: static;
   }
 }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--paper-surface);
+  border-bottom: 1px solid var(--rule);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--rule-strong) 0,
+    var(--rule-strong) 4px,
+    transparent 4px,
+    transparent 12px
+  );
+  background-position: bottom left;
+  background-repeat: repeat-x;
+  background-size: 100% 1px;
+}
+
+.topbar-bar {
+  height: 64px;
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto minmax(140px, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+}
+
+.topbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: center;
+}
+
+.topbar-nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+}
+
+.topbar-hamburger {
+  display: none;
+}
+
+.topbar-mobile-menu {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .topbar-bar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .topbar-tabs {
+    margin-left: auto;
+    justify-self: auto;
+  }
+
+  .topbar-nav-right {
+    display: none;
+  }
+
+  .topbar-hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    appearance: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 18px;
+    border-radius: var(--radius-sm);
+    transition: background 150ms ease;
+  }
+
+  .topbar-hamburger:active {
+    background: var(--rule);
+  }
+
+  .topbar-mobile-menu {
+    display: flex;
+    flex-direction: column;
+    background: var(--paper-surface);
+    animation: topbar-slide-down 200ms ease-out;
+  }
+
+  .topbar-mobile-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    font-family: var(--font-sans), 'Noto Sans TC', system-ui, sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--rule);
+  }
+
+  .topbar-mobile-menu-item:last-child {
+    border-bottom: none;
+  }
+
+  .topbar-mobile-menu-arrow {
+    color: var(--ink-muted);
+    font-size: 16px;
+  }
+}
+
+@keyframes topbar-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-mobile-menu {
+    animation: none;
+  }
+}
