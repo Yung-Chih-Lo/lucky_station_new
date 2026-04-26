@@ -47,10 +47,11 @@ To hide network latency, the client SHALL begin the `<RevealRitual>` presentatio
 - **AND** phase 3 SHALL begin within 100ms of the response arriving
 
 #### Scenario: API error during ritual
-- **WHEN** `POST /api/pick` returns a non-2xx status while the ritual is playing
-- **THEN** the ritual SHALL abort gracefully (hide the card, undim the backdrop)
-- **AND** a user-facing error message SHALL be shown
+- **WHEN** `POST /api/pick` returns a non-2xx status
+- **THEN** the client SHALL display a user-facing toast containing the phrase "請重新整理頁面"
+- **AND** the reveal modal SHALL NOT open
 - **AND** no station name SHALL be "revealed"
+- **AND** the picker SHALL return to its idle state so the user can pick again
 
 ### Requirement: Ritual uses primitive assets, not framework-specific animation libraries
 The ritual SHALL be implementable with CSS keyframes plus a small JavaScript orchestrator; it SHALL NOT require adding a new runtime dependency beyond what is already in `package.json`. Lightweight existing helpers (e.g. `antd`'s motion hooks) MAY be used. If `framer-motion` (or equivalent) is later added for this feature, it SHALL be justified in the change's design document and SHALL keep the ritual's observable behavior identical to the spec.

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Modal } from 'antd'
+import { useRef, useState } from 'react'
+import { Modal, message } from 'antd'
 import SchematicMap from '../SchematicMap'
 import Sidebar from '../Sidebar'
 import ResultDisplay from '../ResultDisplay'
@@ -30,6 +30,8 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   const [pickNo, setPickNo] = useState<number | null>(null)
   const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const lastRequestRef = useRef<Promise<boolean>>(Promise.resolve(true))
+  const [messageApi, contextHolder] = message.useMessage()
 
   const handleLineChange = (codes: string[]) => {
     setSelectedLineCodes(codes)
@@ -46,7 +48,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
 
     setResult(finalStation)
 
-    const request = (async () => {
+    const request = (async (): Promise<boolean> => {
       try {
         const res = await fetch('/api/pick', {
           method: 'POST',
@@ -57,24 +59,31 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
             filter: { line_codes: selectedLineCodes },
           }),
         })
-        if (res.ok) {
-          const data = (await res.json()) as { token?: string; pick_no?: number }
-          if (data.token) {
-            setPickToken(data.token)
-            savePickToHistory(data.token, finalStation.nameZh)
-          }
-          if (typeof data.pick_no === 'number') setPickNo(data.pick_no)
+        if (!res.ok) {
+          messageApi.error('請重新整理頁面')
+          return false
         }
+        const data = (await res.json()) as { token?: string; pick_no?: number }
+        if (data.token) {
+          setPickToken(data.token)
+          savePickToHistory(data.token, finalStation.nameZh)
+        }
+        if (typeof data.pick_no === 'number') setPickNo(data.pick_no)
+        return true
       } catch {
-        // ignore; UI will render with a generated fallback token
+        messageApi.error('請重新整理頁面')
+        return false
       }
     })()
-    setPickPromise(request)
+    lastRequestRef.current = request
+    setPickPromise(request as unknown as Promise<void>)
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) {
       setAnimationStations([])
-      void request.then(() => setModalOpen(true))
+      void request.then((ok) => {
+        if (ok) setModalOpen(true)
+      })
       return
     }
 
@@ -88,13 +97,15 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
     setIsAnimating(true)
   }
 
-  const handleAnimationEnd = () => {
+  const handleAnimationEnd = async () => {
     setIsAnimating(false)
-    setModalOpen(true)
+    const ok = await lastRequestRef.current
+    if (ok) setModalOpen(true)
   }
 
   return (
     <div className="omikuji-card" style={cardStyle}>
+      {contextHolder}
       <div style={cardCaptionStyle}>
         <span>坐火行 · 命中注定</span>
         <span>做到哪就去哪</span>

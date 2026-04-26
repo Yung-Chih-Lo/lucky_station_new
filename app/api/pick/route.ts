@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSqlite } from '@/db/client'
 import { pickRequestSchema } from '@/lib/community/validators'
 import { enforceRateLimit, getClientIp } from '@/lib/community/rate-limit'
-import { pickMrt, pickTra, lookupMrtStation, type PickedStation } from '@/lib/community/pick'
+import { pickTra, lookupMrtStation, type PickedStation } from '@/lib/community/pick'
 import { generateToken } from '@/lib/community/token'
 
 const TOKEN_RETRY_LIMIT = 3
@@ -32,11 +32,7 @@ export async function POST(req: Request) {
 
   let station: PickedStation | null
   if (parsed.data.transport_type === 'mrt') {
-    if (parsed.data.station_id) {
-      station = lookupMrtStation(sqlite, parsed.data.station_id)
-    } else {
-      station = pickMrt(sqlite, { lineCodes: parsed.data.filter?.line_codes })
-    }
+    station = lookupMrtStation(sqlite, parsed.data.station_id)
   } else {
     station = pickTra(sqlite, { counties: parsed.data.filter.counties })
   }

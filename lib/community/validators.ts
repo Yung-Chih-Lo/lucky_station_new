@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const mrtPick = z.object({
   transport_type: z.literal('mrt'),
-  station_id: z.number().int().positive().optional(),
+  station_id: z.number().int().positive(),
   filter: z
     .object({
       line_codes: z.array(z.string().min(1)).optional(),
