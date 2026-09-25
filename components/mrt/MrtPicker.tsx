@@ -1,8 +1,8 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Button, Modal, message } from 'antd'
-import SchematicMap from '../SchematicMap'
+import { Modal, message } from 'antd'
+import MetroMapViewport from './MetroMapViewport'
 import Sidebar from '../Sidebar'
 import ResultDisplay from '../ResultDisplay'
 import { filterByLines, pickRandomStation } from '@/lib/randomStation'
@@ -30,7 +30,6 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   const [pickNo, setPickNo] = useState<number | null>(null)
   const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [mapExpanded, setMapExpanded] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
   const lastRequestRef = useRef<Promise<boolean>>(Promise.resolve(true))
   const [messageApi, contextHolder] = message.useMessage()
@@ -106,7 +105,7 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   }
 
   return (
-    <div className="omikuji-card" style={cardStyle}>
+    <div className="omikuji-card mrt-picker-card" style={cardStyle}>
       {contextHolder}
       <div style={cardCaptionStyle}>
         <span>坐火行 · 命中注定</span>
@@ -128,37 +127,19 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
         <div className="rail-tick-rule is-horizontal" aria-hidden="true" />
 
         <main style={mainPaneStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>路網示意圖 · 非實際距離</span>
-            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <Button style={{ minHeight: 44 }} aria-pressed={mapExpanded} onClick={() => setMapExpanded(!mapExpanded)}>
-                {mapExpanded ? '顯示全圖' : '放大'}
-              </Button>
-              <Button style={{ minHeight: 44 }} onClick={() => setMapOpen(true)}>看大圖</Button>
-            </div>
-          </div>
-          <div style={{ ...mapContainerStyle, ...(mapExpanded ? { overflow: 'auto', display: 'block' } : {}) }} tabIndex={mapExpanded ? 0 : undefined} aria-label="捷運路網，可放大後捲動查看">
-            <div style={{ ...mapInnerStyle, ...(mapExpanded ? { width: canvas.width, height: canvas.height, maxWidth: 'none', maxHeight: 'none' } : {}) }}>
-              <SchematicMap
-                stations={stations}
-                connections={connections}
-                lines={lines}
-                canvas={canvas}
-                selectedLineCodes={selectedLineCodes}
-                animationStations={animationStations}
-                isAnimating={isAnimating}
-                onAnimationEnd={handleAnimationEnd}
-              />
-            </div>
-          </div>
+          <MetroMapViewport
+            stations={stations} connections={connections} lines={lines} canvas={canvas}
+            selectedLineCodes={selectedLineCodes} animationStations={animationStations}
+            isAnimating={isAnimating} onAnimationEnd={handleAnimationEnd}
+            onExpand={() => setMapOpen(true)}
+          />
         </main>
       </div>
 
-      <Modal open={mapOpen} onCancel={() => setMapOpen(false)} footer={null} width={1200} title="臺北・新北捷運路網" styles={{ body: { overflowX: 'auto' } }}>
-        <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>手機可左右滑動查看 · 2026.09 更新 · 示意圖非實際距離</p>
-        <div style={{ width: '100%', minWidth: 900, aspectRatio: `${canvas.width} / ${canvas.height}`, background: 'var(--paper-surface)', borderRadius: 12 }}>
-          <SchematicMap stations={stations} connections={connections} lines={lines} canvas={canvas} />
-        </div>
+      <Modal open={mapOpen} onCancel={() => setMapOpen(false)} footer={null} width="calc(100vw - 32px)"
+        style={{ top: 16, maxWidth: 1600 }} title="捷運路網大圖" destroyOnClose className="metro-map-modal">
+        <MetroMapViewport expanded stations={stations} connections={connections} lines={lines} canvas={canvas}
+          selectedLineCodes={selectedLineCodes} />
       </Modal>
 
       <Modal
@@ -195,8 +176,6 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
 }
 
 const cardStyle: React.CSSProperties = {
-  margin: '0 20px',
-  padding: '24px',
   display: 'flex',
   flexDirection: 'column',
   gap: 16,
@@ -230,28 +209,5 @@ const mainPaneStyle: React.CSSProperties = {
   minWidth: 0,
   minHeight: 0,
   height: '100%',
-}
-
-const mapContainerStyle: React.CSSProperties = {
-  boxSizing: 'border-box',
-  width: '100%',
-  flex: 1,
-  minHeight: 0,
-  borderRadius: 'var(--radius-md)',
-  overflow: 'hidden',
-  background: 'var(--paper-surface)',
-  border: '1px solid var(--rule)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: 16,
-}
-
-const mapInnerStyle: React.CSSProperties = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
 }
 
