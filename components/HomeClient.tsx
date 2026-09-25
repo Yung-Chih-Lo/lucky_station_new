@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import MrtPicker from './mrt/MrtPicker'
 import TraPicker from './tra/TraPicker'
 import { useThemeMode } from './ThemeProvider'
@@ -21,16 +20,8 @@ type Props = {
 
 export default function HomeClient({ mrt, tra }: Props) {
   const { mode } = useThemeMode()
-  const [hydrated, setHydrated] = useState(false)
-
-  useEffect(() => {
-    setHydrated(true)
-  }, [])
-
-  if (!hydrated) return null
-
   return (
-    <div style={{ height: 'calc(100vh - 64px)', overflow: 'hidden', padding: '16px 0 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+    <div className="home-picker">
       {mode === 'mrt' ? (
         <MrtPicker
           stations={mrt.stations}

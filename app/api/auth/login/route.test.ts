@@ -8,8 +8,8 @@ const getSession = vi.fn(async () => {
   const session = { isAdmin: false, save: sessionSave }
   return session
 })
-const enforceRateLimit = vi.fn(() => ({ ok: true, remaining: 4 }))
-const getClientIp = vi.fn(() => '1.2.3.4')
+const enforceRateLimit = vi.fn((..._args: unknown[]) => ({ ok: true, remaining: 4 }))
+const getClientIp = vi.fn((_headers: Headers) => '1.2.3.4')
 
 vi.mock('@/lib/auth', () => ({
   verifyAdminCredentials: (u: string, p: string) => verifyAdminCredentials(u, p),
@@ -38,8 +38,8 @@ const logSpies: Array<ReturnType<typeof vi.spyOn>> = []
 
 function allLoggedStrings(): string[] {
   return logSpies.flatMap((spy) =>
-    spy.mock.calls.flatMap((call) =>
-      call.map((arg) => {
+    spy.mock.calls.flatMap((call: unknown[]) =>
+      call.map((arg: unknown) => {
         try {
           return typeof arg === 'string' ? arg : JSON.stringify(arg)
         } catch {

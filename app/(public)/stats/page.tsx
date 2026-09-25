@@ -1,7 +1,22 @@
+import type { Metadata } from 'next'
 import StatsClient from './StatsClient'
 import { getSqlite } from '@/db/client'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: '抽站排行榜 | 坐火行',
+  description: '查看坐火行的台北捷運與台鐵熱門抽站排行，探索大家抽到的下一站。',
+  alternates: { canonical: '/stats' },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_TW',
+    siteName: '坐火行',
+    title: '抽站排行榜 | 坐火行',
+    description: '查看台北捷運與台鐵熱門抽站排行。',
+    url: '/stats',
+  },
+}
 
 type Ranking = {
   station_id: number
