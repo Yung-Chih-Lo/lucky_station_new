@@ -66,6 +66,7 @@ export default function TraPicker({ counties, countyToStations }: Props) {
     }
     cycleStartRef.current = Date.now()
     setShowResult(false)
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     setCyclingName(pickRandomStation(selectedCounties, countyToStations))
     cycleRef.current = setInterval(() => {
       setCyclingName(pickRandomStation(selectedCounties, countyToStations))
@@ -82,6 +83,10 @@ export default function TraPicker({ counties, countyToStations }: Props) {
   // When result arrives, wait for minimum cycling time before revealing
   useEffect(() => {
     if (!result || !cycleStartRef.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShowResult(true)
+      return
+    }
     const elapsed = Date.now() - cycleStartRef.current
     const remaining = Math.max(0, MIN_CYCLE_MS - elapsed)
     const t = setTimeout(() => {

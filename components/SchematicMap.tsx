@@ -12,8 +12,8 @@ import type {
 
 const DIM_OPACITY = 0.15
 const ACTIVE_OPACITY = 1
-const DEFAULT_OPACITY = 0.85
-const DEFAULT_CONNECTION_OPACITY = 0.7
+const DEFAULT_OPACITY = 1
+const DEFAULT_CONNECTION_OPACITY = 1
 
 const ANIMATION_STEP_MS = 180
 const ANIMATION_SETTLE_MS = 600
@@ -38,6 +38,7 @@ export type SchematicMapProps = {
   animationStations?: StationView[]
   isAnimating?: boolean
   onAnimationEnd?: () => void
+  animationScale?: number
   // Admin hooks
   adminMode?: boolean
   onStationPositionChange?: (id: number, next: StationPositionChange) => void
@@ -94,6 +95,7 @@ export default function SchematicMap({
   animationStations,
   isAnimating = false,
   onAnimationEnd,
+  animationScale = 1,
   adminMode = false,
   onStationPositionChange,
   onLabelPositionChange,
@@ -311,21 +313,24 @@ export default function SchematicMap({
           const color = primary ? lineColor(primary) : '#999'
           const active = isStationActive(s)
           const opacity = hasFilter ? (active ? ACTIVE_OPACITY : DIM_OPACITY) : DEFAULT_OPACITY
-          const radius = s.lineCodes.length > 1 ? 10 : 7
+          const interchange = s.lineCodes.length > 1
+          const radius = interchange ? 10 : 6
           const { x, y } = stationDisplay(s)
           return (
-            <circle
-              key={`station-${s.id}`}
-              cx={x}
-              cy={y}
-              r={radius}
-              fill="white"
-              stroke={color}
-              strokeWidth={3}
-              opacity={opacity}
-              style={adminMode ? { cursor: 'grab' } : undefined}
-              onPointerDown={adminMode ? (e) => handleStationPointerDown(e, s.id) : undefined}
-            />
+            <g key={`station-${s.id}`} data-station-id={s.id} data-interchange={interchange || undefined}>
+              <circle
+                cx={x}
+                cy={y}
+                r={radius}
+                fill="white"
+                stroke={interchange ? '#334155' : color}
+                strokeWidth={interchange ? 2.5 : 2}
+                opacity={opacity}
+                style={adminMode ? { cursor: 'grab' } : undefined}
+                onPointerDown={adminMode ? (e) => handleStationPointerDown(e, s.id) : undefined}
+              />
+              {interchange && <circle cx={x} cy={y} r={5.5} fill="white" stroke="#334155" strokeWidth={1.5} opacity={opacity} pointerEvents="none" />}
+            </g>
           )
         })}
       </g>
@@ -341,7 +346,7 @@ export default function SchematicMap({
           const y = Math.max(label.y - 22, Math.min(point.y, label.y + 4))
           const distance = Math.hypot(x - point.x, y - point.y)
           if (distance < 26) return null
-          return <line key={`leader-${s.id}`} x1={point.x + (x - point.x) * 12 / distance} y1={point.y + (y - point.y) * 12 / distance} x2={x} y2={y} stroke="var(--ink-muted)" strokeWidth={1} opacity={isStationActive(s) ? 0.45 : DIM_OPACITY} pointerEvents="none" />
+          return <line key={`leader-${s.id}`} x1={point.x + (x - point.x) * 12 / distance} y1={point.y + (y - point.y) * 12 / distance} x2={x} y2={y} stroke="var(--ink-muted)" strokeWidth={1.5} opacity={isStationActive(s) ? 0.75 : DIM_OPACITY} pointerEvents="none" />
         })}
         {stations.map((s) => {
           const active = isStationActive(s)
@@ -376,30 +381,12 @@ export default function SchematicMap({
         })}
       </g>
 
-      {!adminMode && canvas.width >= 1500 && (
-        <g transform={`translate(${canvas.width - 510}, 70)`} pointerEvents="none">
-          <text fontSize={40} fontWeight={700} fill="var(--ink)" style={{ fontFamily: 'var(--font-serif), serif' }}>臺北・新北</text>
-          <text y={36} fontSize={18} fill="var(--ink-muted)">捷運路網 · TAIPEI METRO NETWORK</text>
-          {['BR', 'R', 'G', 'O', 'BL', 'Y', 'V', 'K', 'LB', 'RA', 'GA'].map((code, i) => {
-            const line = lines.find((line) => line.code === code)
-            if (!line) return null
-            return (
-              <g key={code} transform={`translate(${i % 2 * 235}, ${82 + Math.floor(i / 2) * 42})`}>
-                <rect width={42} height={26} rx={6} fill={line.color} />
-                <text x={21} y={18} textAnchor="middle" fontSize={15} fontWeight={700} fill="#fff">{code}</text>
-                <text x={54} y={19} fontSize={18} fill="var(--ink)">{line.nameZh ?? code}</text>
-              </g>
-            )
-          })}
-          <text y={362} fontSize={16} fill="var(--ink-muted)">2026.09 更新 · 示意圖，非實際距離</text>
-        </g>
-      )}
-
       {/* Train animation marker */}
       <TrainMarker
         animationStations={animationStations}
         isAnimating={isAnimating}
         onAnimationEnd={onAnimationEnd}
+        animationScale={animationScale}
       />
     </svg>
   )
@@ -409,9 +396,10 @@ type TrainMarkerProps = {
   animationStations?: StationView[]
   isAnimating: boolean
   onAnimationEnd?: () => void
+  animationScale: number
 }
 
-function TrainMarker({ animationStations, isAnimating, onAnimationEnd }: TrainMarkerProps) {
+function TrainMarker({ animationStations, isAnimating, onAnimationEnd, animationScale }: TrainMarkerProps) {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -457,7 +445,7 @@ function TrainMarker({ animationStations, isAnimating, onAnimationEnd }: TrainMa
   if (!s) return null
 
   return (
-    <g transform={`translate(${s.schematicX}, ${s.schematicY})`} pointerEvents="none">
+    <g transform={`translate(${s.schematicX}, ${s.schematicY}) scale(${1 / Math.max(animationScale, 0.01)})`} pointerEvents="none">
       <circle
         r={11}
         fill="var(--accent)"
