@@ -7,9 +7,10 @@ vi.mock('@/components/ThemeProvider', () => ({ useThemeMode: () => ({ setMode: v
 vi.mock('@/components/PickHistory', () => ({ default: () => null }))
 
 let sqlite: Database.Database
+let ExplorePage: typeof import('./page').default
 vi.mock('@/db/client', () => ({ getSqlite: () => sqlite }))
 
-beforeAll(() => {
+beforeAll(async () => {
   sqlite = new Database(':memory:')
   sqlite.exec(`
     CREATE TABLE stations (id INTEGER PRIMARY KEY, name_zh TEXT, transport_type TEXT, county TEXT);
@@ -18,13 +19,13 @@ beforeAll(() => {
     INSERT INTO comments VALUES (1, 1, '在台北車站看見夕陽', 1780000000000),
                                 (2, 2, '花蓮的海很美', 1780000001000);
   `)
+  ExplorePage = (await import('./page')).default
 })
 
 afterAll(() => sqlite.close())
 
 describe('ExplorePage server-rendered comments', () => {
   it('puts the first page of comments in HTML without a client effect', async () => {
-    const { default: ExplorePage } = await import('./page')
     const html = renderToString(await ExplorePage({ searchParams: Promise.resolve({}) }))
 
     expect(html).toContain('花蓮的海很美')
@@ -34,7 +35,6 @@ describe('ExplorePage server-rendered comments', () => {
   })
 
   it('applies station_id before rendering HTML', async () => {
-    const { default: ExplorePage } = await import('./page')
     const html = renderToString(
       await ExplorePage({ searchParams: Promise.resolve({ station_id: '1' }) }),
     )

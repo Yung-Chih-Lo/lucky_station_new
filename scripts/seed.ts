@@ -2,6 +2,7 @@
    Idempotent: re-running against a populated DB does not duplicate rows. */
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { sql } from 'drizzle-orm'
@@ -16,6 +17,9 @@ const LINE_COLORS: Record<string, string> = {
   O: '#f5a622',
   BL: '#0070bd',
   Y: '#d4a017',
+  V: '#e5554f',
+  K: '#b3bd00',
+  LB: '#66ccff',
 }
 
 const LINE_NAMES_ZH: Record<string, string> = {
@@ -27,6 +31,9 @@ const LINE_NAMES_ZH: Record<string, string> = {
   Y: '環狀線',
   RA: '新北投支線',
   GA: '小碧潭支線',
+  V: '淡海輕軌',
+  K: '安坑輕軌',
+  LB: '三鶯線',
 }
 
 type RawPathPoint = { command: 'M' | 'L' | 'Q'; coordinates: number[] }
@@ -46,16 +53,13 @@ type RawData = {
   connections: RawConnection[]
 }
 
-function resolveJsonPath(): string {
-  const arg = process.argv[2]
+function resolveJsonPath(args: string[]): string {
+  const arg = args.find((value) => value !== '--layout')
   if (arg) return path.resolve(arg)
   return path.resolve(process.cwd(), 'scripts/seed-data/metroData.json')
 }
 
-function main(): void {
-  const dbPath = process.env.DATABASE_PATH ?? './data/metro.db'
-  const jsonPath = resolveJsonPath()
-
+export function seedMetro(dbPath: string, jsonPath: string, options: { layout?: boolean } = {}): void {
   if (!fs.existsSync(jsonPath)) {
     console.error(`seed: source JSON not found at ${jsonPath}`)
     process.exit(1)
@@ -75,14 +79,16 @@ function main(): void {
   for (const s of raw.stations) for (const code of s.lines) usedLineCodes.add(code)
   for (const c of raw.connections) usedLineCodes.add(c.line)
 
-  const nameToId = new Map<string, number>()
-  for (const s of raw.stations) nameToId.set(s.name.zh, s.id)
-
   const tx = sqlite.transaction(() => {
     // canvas_config singleton
-    db.run(
-      sql`INSERT OR IGNORE INTO canvas_config (id, width, height) VALUES (1, ${raw.size.width}, ${raw.size.height})`,
-    )
+    if (options.layout) {
+      db.run(sql`INSERT INTO canvas_config (id, width, height) VALUES (1, ${raw.size.width}, ${raw.size.height})
+        ON CONFLICT(id) DO UPDATE SET width = excluded.width, height = excluded.height`)
+    } else {
+      db.run(sql`INSERT INTO canvas_config (id, width, height) VALUES (1, ${raw.size.width}, ${raw.size.height})
+        ON CONFLICT(id) DO UPDATE SET
+          width = MAX(width, excluded.width), height = MAX(height, excluded.height)`)
+    }
 
     // lines
     for (const code of usedLineCodes) {
@@ -92,25 +98,58 @@ function main(): void {
       )
     }
 
+    // Existing MRT names own their IDs. This also protects picks, comments and
+    // administrator-adjusted positions when the source diagram changes.
+    const nameToId = new Map<string, number>()
+    const occupiedIds = new Set<number>()
+    for (const row of sqlite.prepare('SELECT id, transport_type, name_zh FROM stations').all() as
+      { id: number; transport_type: string; name_zh: string }[]) {
+      occupiedIds.add(row.id)
+      if (row.transport_type === 'mrt') nameToId.set(row.name_zh, row.id)
+    }
+    let nextId = Math.max(
+      0,
+      ...occupiedIds,
+      ...raw.stations.map((station) => station.id),
+    ) + 1
+
     // stations
     for (const s of raw.stations) {
+      if (nameToId.has(s.name.zh)) {
+        if (options.layout) {
+          const id = nameToId.get(s.name.zh)!
+          db.run(sql`UPDATE stations SET
+            schematic_x = ${s.center.x}, schematic_y = ${s.center.y},
+            label_x = ${s.name.pos.x}, label_y = ${s.name.pos.y},
+            label_anchor = ${s.name.pos.anchor}, updated_at = ${now}
+            WHERE id = ${id} AND (
+              schematic_x IS NOT ${s.center.x} OR schematic_y IS NOT ${s.center.y} OR
+              label_x IS NOT ${s.name.pos.x} OR label_y IS NOT ${s.name.pos.y} OR
+              label_anchor IS NOT ${s.name.pos.anchor})`)
+        }
+        continue
+      }
+      const id = occupiedIds.has(s.id) ? nextId++ : s.id
       db.run(sql`
-        INSERT OR IGNORE INTO stations
+        INSERT INTO stations
           (id, transport_type, name_zh, name_en, lat, lng, schematic_x, schematic_y, label_x, label_y, label_anchor, updated_at)
         VALUES
-          (${s.id}, 'mrt', ${s.name.zh}, ${s.name.en ?? null},
+          (${id}, 'mrt', ${s.name.zh}, ${s.name.en ?? null},
            ${s.lat ?? null}, ${s.lng ?? null},
            ${s.center.x}, ${s.center.y},
            ${s.name.pos.x}, ${s.name.pos.y}, ${s.name.pos.anchor},
            ${now})
       `)
+      occupiedIds.add(id)
+      nameToId.set(s.name.zh, id)
     }
 
     // station_lines
     for (const s of raw.stations) {
+      const stationId = nameToId.get(s.name.zh)!
       for (const code of s.lines) {
         db.run(
-          sql`INSERT OR IGNORE INTO station_lines (station_id, line_code) VALUES (${s.id}, ${code})`,
+          sql`INSERT OR IGNORE INTO station_lines (station_id, line_code) VALUES (${stationId}, ${code})`,
         )
       }
     }
@@ -120,36 +159,49 @@ function main(): void {
       const fromId = nameToId.get(c.from)
       const toId = nameToId.get(c.to)
       if (fromId === undefined || toId === undefined) {
-        console.warn(`seed: skipping connection with unknown station (${c.from} -> ${c.to})`)
-        continue
+        throw new Error(`seed: connection has unknown station (${c.from} -> ${c.to})`)
       }
       const existing = sqlite
         .prepare(
-          'SELECT id FROM connections WHERE from_station_id = ? AND to_station_id = ? AND line_code = ?',
+          'SELECT id, path_json FROM connections WHERE from_station_id = ? AND to_station_id = ? AND line_code = ?',
         )
-        .get(fromId, toId, c.line)
-      if (existing) continue
+        .get(fromId, toId, c.line) as { id: number; path_json: string } | undefined
+      const pathJson = JSON.stringify(c.path)
+      if (existing) {
+        if (options.layout && existing.path_json !== pathJson) {
+          db.run(sql`UPDATE connections SET path_json = ${pathJson} WHERE id = ${existing.id}`)
+        }
+        continue
+      }
       db.run(sql`
         INSERT INTO connections (from_station_id, to_station_id, line_code, path_json)
-        VALUES (${fromId}, ${toId}, ${c.line}, ${JSON.stringify(c.path)})
+        VALUES (${fromId}, ${toId}, ${c.line}, ${pathJson})
       `)
     }
   })
 
-  tx()
+  try {
+    tx()
 
-  const counts = {
-    stations: sqlite.prepare('SELECT COUNT(*) AS n FROM stations').get() as { n: number },
-    lines: sqlite.prepare('SELECT COUNT(*) AS n FROM lines').get() as { n: number },
-    stationLines: sqlite.prepare('SELECT COUNT(*) AS n FROM station_lines').get() as { n: number },
-    connections: sqlite.prepare('SELECT COUNT(*) AS n FROM connections').get() as { n: number },
+    const counts = {
+      stations: sqlite.prepare('SELECT COUNT(*) AS n FROM stations').get() as { n: number },
+      lines: sqlite.prepare('SELECT COUNT(*) AS n FROM lines').get() as { n: number },
+      stationLines: sqlite.prepare('SELECT COUNT(*) AS n FROM station_lines').get() as { n: number },
+      connections: sqlite.prepare('SELECT COUNT(*) AS n FROM connections').get() as { n: number },
+    }
+    console.log(
+      `seed: done (stations=${counts.stations.n}, lines=${counts.lines.n}, ` +
+        `station_lines=${counts.stationLines.n}, connections=${counts.connections.n})`,
+    )
+
+  } finally {
+    sqlite.close()
   }
-  console.log(
-    `seed: done (stations=${counts.stations.n}, lines=${counts.lines.n}, ` +
-      `station_lines=${counts.stationLines.n}, connections=${counts.connections.n})`,
-  )
-
-  sqlite.close()
 }
 
-main()
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  const args = process.argv.slice(2)
+  seedMetro(process.env.DATABASE_PATH ?? './data/metro.db', resolveJsonPath(args), {
+    layout: args.includes('--layout'),
+  })
+}

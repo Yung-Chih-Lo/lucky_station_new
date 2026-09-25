@@ -22,6 +22,13 @@
       "when": 1777216580119,
       "tag": "0002_smart_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790294400000,
+      "tag": "0003_metro_layout_20260925",
+      "breakpoints": true
     }
   ]
 }
