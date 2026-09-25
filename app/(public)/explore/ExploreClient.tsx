@@ -1,7 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import {
   Empty,
   Input,
@@ -15,72 +14,84 @@ import { ClockCircleOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import Link from 'next/link'
 import { useThemeMode } from '@/components/ThemeProvider'
 import PickHistory from '@/components/PickHistory'
+import type { CommentsResult } from '@/lib/comments'
 
 const { Title, Paragraph, Text } = Typography
-
-type Comment = {
-  id: number
-  station_id: number
-  content: string
-  created_at: number
-  name_zh: string
-  transport_type: 'mrt' | 'tra'
-  county: string | null
-}
-
-type ApiResponse = {
-  comments: Comment[]
-  total: number
-  page: number
-  total_pages: number
-}
 
 type Filter = 'all' | 'mrt' | 'tra'
 
 const PAGE_SIZE = 5
 
 function formatDate(ms: number): string {
-  const d = new Date(ms)
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(ms))
+  const part = (name: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === name)?.value
+  return `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}`
 }
 
-export default function ExploreClient() {
+export default function ExploreClient({
+  stationId,
+  initialData,
+}: {
+  stationId: string | null
+  initialData: CommentsResult
+}) {
   const { setMode } = useThemeMode()
   useEffect(() => {
     setMode('mrt')
   }, [setMode])
 
-  const searchParams = useSearchParams()
-  const stationIdParam = searchParams?.get('station_id') ?? null
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [data, setData] = useState<ApiResponse | null>(null)
+  const [data, setData] = useState<CommentsResult>(initialData)
   const [loading, setLoading] = useState(false)
+  const lastQuery = useRef<string | null>(null)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (stationIdParam) params.set('station_id', stationIdParam)
-      if (filter !== 'all') params.set('transport_type', filter)
-      if (search.trim()) params.set('q', search.trim())
-      params.set('page', String(page))
-      params.set('limit', String(PAGE_SIZE))
-      const res = await fetch(`/api/comments?${params.toString()}`)
-      const json = (await res.json()) as ApiResponse
-      setData(json)
-    } catch {
-      setData({ comments: [], total: 0, page: 1, total_pages: 1 })
-    } finally {
-      setLoading(false)
-    }
-  }, [filter, search, page, stationIdParam])
+  const params = new URLSearchParams()
+  if (stationId) params.set('station_id', stationId)
+  if (filter !== 'all') params.set('transport_type', filter)
+  if (search.trim()) params.set('q', search.trim())
+  params.set('page', String(page))
+  params.set('limit', String(PAGE_SIZE))
+  const query = params.toString()
 
   useEffect(() => {
-    void load()
-  }, [load])
+    if (lastQuery.current === null) {
+      lastQuery.current = query
+      return
+    }
+    if (lastQuery.current === query) return
+    lastQuery.current = query
+
+    const controller = new AbortController()
+    let active = true
+    setLoading(true)
+    void (async () => {
+      try {
+        const res = await fetch(`/api/comments?${query}`, { signal: controller.signal })
+        if (!res.ok) throw new Error('Unable to load comments')
+        const json = (await res.json()) as CommentsResult
+        if (active) setData(json)
+      } catch {
+        if (active) setData({ comments: [], total: 0, page: 1, total_pages: 1 })
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [query])
 
   const handleFilterChange = (v: string | number) => {
     setFilter(v as Filter)

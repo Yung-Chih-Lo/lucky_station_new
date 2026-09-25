@@ -295,7 +295,7 @@ export default function SchematicMap({
               d={pathPointsToD(c.path, fromPos, toPos)}
               fill="none"
               stroke={lineColor(c.lineCode)}
-              strokeWidth={6}
+              strokeWidth={7}
               strokeLinecap="round"
               strokeLinejoin="round"
               opacity={opacity}
@@ -311,7 +311,7 @@ export default function SchematicMap({
           const color = primary ? lineColor(primary) : '#999'
           const active = isStationActive(s)
           const opacity = hasFilter ? (active ? ACTIVE_OPACITY : DIM_OPACITY) : DEFAULT_OPACITY
-          const radius = s.lineCodes.length > 1 ? 9 : 6
+          const radius = s.lineCodes.length > 1 ? 10 : 7
           const { x, y } = stationDisplay(s)
           return (
             <circle
@@ -333,6 +333,17 @@ export default function SchematicMap({
       {/* Labels */}
       <g>
         {stations.map((s) => {
+          const point = stationDisplay(s)
+          const label = labelDisplay(s)
+          const width = Array.from(s.nameZh).reduce((sum, c) => sum + (c.charCodeAt(0) < 128 ? 10 : 18), 0)
+          const left = label.x - (s.labelAnchor === 'end' ? width : s.labelAnchor === 'middle' ? width / 2 : 0)
+          const x = Math.max(left, Math.min(point.x, left + width))
+          const y = Math.max(label.y - 22, Math.min(point.y, label.y + 4))
+          const distance = Math.hypot(x - point.x, y - point.y)
+          if (distance < 26) return null
+          return <line key={`leader-${s.id}`} x1={point.x + (x - point.x) * 12 / distance} y1={point.y + (y - point.y) * 12 / distance} x2={x} y2={y} stroke="var(--ink-muted)" strokeWidth={1} opacity={isStationActive(s) ? 0.45 : DIM_OPACITY} pointerEvents="none" />
+        })}
+        {stations.map((s) => {
           const active = isStationActive(s)
           const opacity = hasFilter ? (active ? ACTIVE_OPACITY : DIM_OPACITY) : DEFAULT_OPACITY
           const { x, y } = labelDisplay(s)
@@ -343,7 +354,7 @@ export default function SchematicMap({
               x={x}
               y={y}
               textAnchor={s.labelAnchor}
-              fontSize={14}
+              fontSize={18}
               fontWeight={500}
               fill={adminMode ? '#333' : 'var(--ink)'}
               opacity={opacity}
@@ -364,6 +375,25 @@ export default function SchematicMap({
           )
         })}
       </g>
+
+      {!adminMode && canvas.width >= 1500 && (
+        <g transform={`translate(${canvas.width - 510}, 70)`} pointerEvents="none">
+          <text fontSize={40} fontWeight={700} fill="var(--ink)" style={{ fontFamily: 'var(--font-serif), serif' }}>臺北・新北</text>
+          <text y={36} fontSize={18} fill="var(--ink-muted)">捷運路網 · TAIPEI METRO NETWORK</text>
+          {['BR', 'R', 'G', 'O', 'BL', 'Y', 'V', 'K', 'LB', 'RA', 'GA'].map((code, i) => {
+            const line = lines.find((line) => line.code === code)
+            if (!line) return null
+            return (
+              <g key={code} transform={`translate(${i % 2 * 235}, ${82 + Math.floor(i / 2) * 42})`}>
+                <rect width={42} height={26} rx={6} fill={line.color} />
+                <text x={21} y={18} textAnchor="middle" fontSize={15} fontWeight={700} fill="#fff">{code}</text>
+                <text x={54} y={19} fontSize={18} fill="var(--ink)">{line.nameZh ?? code}</text>
+              </g>
+            )
+          })}
+          <text y={362} fontSize={16} fill="var(--ink-muted)">2026.09 更新 · 示意圖，非實際距離</text>
+        </g>
+      )}
 
       {/* Train animation marker */}
       <TrainMarker

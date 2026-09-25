@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Modal, message } from 'antd'
+import { Button, Modal, message } from 'antd'
 import SchematicMap from '../SchematicMap'
 import Sidebar from '../Sidebar'
 import ResultDisplay from '../ResultDisplay'
@@ -30,6 +30,8 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
   const [pickNo, setPickNo] = useState<number | null>(null)
   const [pickPromise, setPickPromise] = useState<Promise<void> | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [mapExpanded, setMapExpanded] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
   const lastRequestRef = useRef<Promise<boolean>>(Promise.resolve(true))
   const [messageApi, contextHolder] = message.useMessage()
 
@@ -126,8 +128,17 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
         <div className="rail-tick-rule is-horizontal" aria-hidden="true" />
 
         <main style={mainPaneStyle}>
-          <div style={mapContainerStyle}>
-            <div style={mapInnerStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>路網示意圖 · 非實際距離</span>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <Button style={{ minHeight: 44 }} aria-pressed={mapExpanded} onClick={() => setMapExpanded(!mapExpanded)}>
+                {mapExpanded ? '顯示全圖' : '放大'}
+              </Button>
+              <Button style={{ minHeight: 44 }} onClick={() => setMapOpen(true)}>看大圖</Button>
+            </div>
+          </div>
+          <div style={{ ...mapContainerStyle, ...(mapExpanded ? { overflow: 'auto', display: 'block' } : {}) }} tabIndex={mapExpanded ? 0 : undefined} aria-label="捷運路網，可放大後捲動查看">
+            <div style={{ ...mapInnerStyle, ...(mapExpanded ? { width: canvas.width, height: canvas.height, maxWidth: 'none', maxHeight: 'none' } : {}) }}>
               <SchematicMap
                 stations={stations}
                 connections={connections}
@@ -142,6 +153,13 @@ export default function MrtPicker({ stations, connections, lines, canvas }: Prop
           </div>
         </main>
       </div>
+
+      <Modal open={mapOpen} onCancel={() => setMapOpen(false)} footer={null} width={1200} title="臺北・新北捷運路網" styles={{ body: { overflowX: 'auto' } }}>
+        <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>手機可左右滑動查看 · 2026.09 更新 · 示意圖非實際距離</p>
+        <div style={{ width: '100%', minWidth: 900, aspectRatio: `${canvas.width} / ${canvas.height}`, background: 'var(--paper-surface)', borderRadius: 12 }}>
+          <SchematicMap stations={stations} connections={connections} lines={lines} canvas={canvas} />
+        </div>
+      </Modal>
 
       <Modal
         open={modalOpen}
@@ -215,6 +233,7 @@ const mainPaneStyle: React.CSSProperties = {
 }
 
 const mapContainerStyle: React.CSSProperties = {
+  boxSizing: 'border-box',
   width: '100%',
   flex: 1,
   minHeight: 0,
@@ -231,8 +250,6 @@ const mapContainerStyle: React.CSSProperties = {
 const mapInnerStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
-  maxWidth: 640,
-  maxHeight: 640,
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
